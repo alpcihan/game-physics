@@ -8,7 +8,7 @@ struct rigidBody {
 	Vec3 boxCenter;
 	Vec3 size;
 	float mass;
-	Quat orientation;
+	Quat orientation = {0,0,0,1};
 	Vec3 lineerVelocity;
 	Vec3 angularVelocity;
 	Vec3 angularMomentum;

@@ -34,8 +34,8 @@ public:
 	Vec3 getTotalForce(int i);
 	float getMass(int i);
 
-	void implementEuler(float timeStep,int i);
-	void updateOrientation(int i,float timestep);
+	void implementEuler(int i, float timeStep);
+	void updateOrientation(int i, float timestep);
 	void updateAngularVelocity(int i,float timestep);
 	void updateWorldPosition(int i);
 

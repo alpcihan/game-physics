@@ -117,10 +117,10 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 void RigidBodySystemSimulator::simulateTimestep(float timestep)
 {
 	for (unsigned int i = 0; i < this->getNumberOfRigidBodies(); ++i) {
-		implementEuler(timestep,i);
-		updateOrientation(i,timestep);
-		updateAngularVelocity(i,timestep);
-		updateWorldPosition(i);
+		implementEuler(i, timestep);
+		updateOrientation(i, timestep);
+		updateAngularVelocity(i, timestep);
+
 		rigidBodies[i].totalForce = 0;
 		rigidBodies[i].torq = 0;
 	}
@@ -169,17 +169,17 @@ void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
 void RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass)
 {
 	rigidBody newElement;
-	newElement.boxCenter=position;
+	newElement.boxCenter = position;
 	newElement.size = size;
 	newElement.mass = mass;
 	newElement.angularVelocity = Vec3(0.0);
 	newElement.lineerVelocity = Vec3(0.0);
 	newElement.totalForce = 0;
 
-	Vec3 cuboidInertiaVals(0.0);//I0
-	cuboidInertiaVals.x = (1.0 / 12.0 )* mass * (size.y * size.y + size.z * size.z); //I(0,0)
-	cuboidInertiaVals.y = (1.0 / 12.0) * mass * (size.x * size.x + size.z * size.z);//I(1,1)
-	cuboidInertiaVals.z = (1.0 / 12.0) * mass * (size.x * size.x + size.y * size.y);  //I(2,2)
+	Vec3 cuboidInertiaVals(0.0);
+	cuboidInertiaVals.x = (1.0 / 12.0) * mass * (size.y * size.y + size.z * size.z);
+	cuboidInertiaVals.y = (1.0 / 12.0) * mass * (size.x * size.x + size.z * size.z);
+	cuboidInertiaVals.z = (1.0 / 12.0) * mass * (size.x * size.x + size.y * size.y);
 
 	newElement.inverseInertiaTensor.initScaling(cuboidInertiaVals.x, cuboidInertiaVals.y, cuboidInertiaVals.z); //set inertia tensor values //!!!!!!!!!!!possible error!!!!!!!!!!!!!!!!!!
 	newElement.inverseInertiaTensor = newElement.inverseInertiaTensor.inverse();
@@ -207,39 +207,35 @@ float RigidBodySystemSimulator::getMass(int i)
 	return rigidBodies[i].mass;
 }
 
-void RigidBodySystemSimulator::implementEuler(float timeStep,int i)
+void RigidBodySystemSimulator::implementEuler(int i, float timeStep)
 {
-	Vec3 x=this->getPositionOfRigidBody(i);
-	Vec3 v = this->getLinearVelocityOfRigidBody(i);
-	Vec3 acceleration=this->getTotalForce(i)/this->getMass(i);
-
-	rigidBodies[i].boxCenter = x + timeStep * v;
-	rigidBodies[i].lineerVelocity = v + timeStep * acceleration;
+	rigidBodies[i].boxCenter += timeStep * rigidBodies[i].lineerVelocity;
+	rigidBodies[i].lineerVelocity += timeStep * rigidBodies[i].totalForce / rigidBodies[i].mass;
 }
 
 void RigidBodySystemSimulator::updateOrientation(int i, float timestep)
 {
-	auto r = rigidBodies[i].orientation;
 	auto w = rigidBodies[i].angularVelocity;
-	Quat w_q = Quat(w.x, w.y, w.z,0);
-
-	rigidBodies[i].orientation = (r + (timestep / 2) * w_q * r).unit();
+	Quat w_q = Quat(w.x, w.y, w.z, 0);
+	
+	rigidBodies[i].orientation += (timestep / 2) * rigidBodies[i].orientation * w_q;
+	rigidBodies[i].orientation = rigidBodies[i].orientation.unit();
 }
 
 void RigidBodySystemSimulator::updateAngularVelocity(int i,float timestep)
 {
-	rigidBody object = rigidBodies[i];
+	rigidBody& object = rigidBodies[i];
 
-	//update angular momentum
+	// update angular momentum
 	object.angularMomentum += timestep * object.torq;
 
-	//calculate current inertia tensor
+	// calculate current inertia tensor
 	Mat4 rotation = object.orientation.getRotMat();
 	Mat4 rotation_t = Mat4(rotation);
 	rotation_t.transpose();
 	Mat4 currentInverseInertia = rotation * object.inverseInertiaTensor * rotation_t;
 
-	//update angular velocity
+	// update angular velocity
 	rigidBodies[i].angularVelocity = currentInverseInertia * object.angularMomentum;
 }
 
@@ -253,10 +249,9 @@ void RigidBodySystemSimulator::updateWorldPosition(int i)
 void RigidBodySystemSimulator::setDemo1()
 {
 	rigidBodies.clear();
-	addRigidBody(Vec3(0.0), Vec3(1, 0.6, 0.5), 2);
-	Quat q(Vec3(0, 0, 1), M_PI * 0.5f);
-	setOrientationOf(rigidBodies.size() - 1, q);
 
+	addRigidBody(Vec3(0.0), Vec3(1, 0.6, 0.5), 2);
+	setOrientationOf(rigidBodies.size() - 1, Quat(Vec3(0, 0, 1), M_PI * 0.5f));
 	applyForceOnBody(0,Vec3(0.3,0.5,0.25),Vec3(1,1,0));
 }
 
