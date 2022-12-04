@@ -1,0 +1,271 @@
+#include "RigidBodySystemSimulator.h"
+
+RigidBodySystemSimulator::RigidBodySystemSimulator()
+{
+	this->m_iTestCase = 0;
+	
+}
+
+const char* RigidBodySystemSimulator::getTestCasesStr()
+{
+	return "Demo1,Demo2,Demo3,Demo4";
+}
+
+void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC)
+{
+	this->DUC = DUC;
+	switch (this->m_iTestCase) {
+	case 0:
+		//Demo1
+		
+		break;
+	case 1:
+		//Demo2
+		break;
+	case 2:
+		//Demo3
+		break;
+	case 3:
+		//Demo4
+		break;
+	default:
+		break;
+	}
+}
+
+void RigidBodySystemSimulator::reset()
+{
+	m_mouse.x = m_mouse.y = 0;
+	m_trackmouse.x = m_trackmouse.y = 0;
+	m_oldtrackmouse.x = m_oldtrackmouse.y = 0;
+}
+
+void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
+{
+
+	for (unsigned int i=0; i < this->getNumberOfRigidBodies(); ++i) {
+
+		rigidBody object = rigidBodies[i];
+		Mat4 transform,scale,translate,rotation;
+		scale.initScaling(object.size.x, object.size.y, object.size.z);
+		translate.initTranslation(object.boxCenter.x, object.boxCenter.y, object.boxCenter.z);
+		rotation = object.orientation.getRotMat();
+		transform = scale * rotation * translate;
+
+		DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
+		DUC->drawRigidBody(transform);
+	}
+
+}
+
+void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
+{
+	switch (this->m_iTestCase) {
+	case 0:
+		//Demo1
+		std::cout << "Demo1\n";
+		setDemo1();
+		break;
+	case 1:
+		//Demo2
+		setDemo2();
+		std::cout << "Demo2\n";
+		break;
+	case 2:
+		//Demo3
+		setDemo3();
+		std::cout << "Demo3\n";
+		break;
+	case 3:
+		//Demo4
+		setDemo4();
+		std::cout << "Demo4\n";
+		break;
+	default:
+		break;
+	}
+
+}
+
+void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
+{
+	// Apply the mouse deltas to g_vfMovableObjectPos (move along cameras view plane)
+	Point2D mouseDiff;
+	mouseDiff.x = m_trackmouse.x - m_oldtrackmouse.x;
+	mouseDiff.y = m_trackmouse.y - m_oldtrackmouse.y;
+	if (mouseDiff.x != 0 || mouseDiff.y != 0)
+	{
+		Mat4 worldViewInv = Mat4(DUC->g_camera.GetWorldMatrix() * DUC->g_camera.GetViewMatrix());
+		worldViewInv = worldViewInv.inverse();
+		Vec3 inputView = Vec3((float)mouseDiff.x, (float)-mouseDiff.y, 0);
+		Vec3 inputWorld = worldViewInv.transformVectorNormal(inputView);
+
+		Vec3 inputstartView = Vec3((float)m_trackmouse.x, (float)m_trackmouse.y, 0);
+		Vec3 inputstartWorld = worldViewInv.transformVector(inputstartView);
+		// find a proper scale!
+		float inputScale = 0.0001f;
+		inputWorld = inputWorld * inputScale;
+
+		for (int i = 0; i < this->getNumberOfRigidBodies(); ++i) {
+
+			this->applyForceOnBody(i, inputstartWorld, inputWorld);
+
+		}
+	}
+}
+
+void RigidBodySystemSimulator::simulateTimestep(float timestep)
+{
+	for (unsigned int i = 0; i < this->getNumberOfRigidBodies(); ++i) {
+		implementEuler(timestep,i);
+		updateOrientation(i,timestep);
+		updateAngularVelocity(i,timestep);
+		updateWorldPosition(i);
+		rigidBodies[i].totalForce = 0;
+		rigidBodies[i].torq = 0;
+	}
+}
+
+void RigidBodySystemSimulator::onClick(int x, int y)
+{
+	m_trackmouse.x = x;
+	m_trackmouse.y = y;
+}
+
+void RigidBodySystemSimulator::onMouse(int x, int y)
+{
+	m_oldtrackmouse.x = x;
+	m_oldtrackmouse.y = y;
+	m_trackmouse.x = x;
+	m_trackmouse.y = y;
+}
+
+int RigidBodySystemSimulator::getNumberOfRigidBodies()
+{
+	return rigidBodies.size();
+}
+
+Vec3 RigidBodySystemSimulator::getPositionOfRigidBody(int i)
+{
+	return rigidBodies[i].boxCenter;
+}
+
+Vec3 RigidBodySystemSimulator::getLinearVelocityOfRigidBody(int i)
+{
+	return rigidBodies[i].lineerVelocity;
+}
+
+Vec3 RigidBodySystemSimulator::getAngularVelocityOfRigidBody(int i)
+{
+	return rigidBodies[i].angularVelocity;
+}
+
+void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
+{
+	rigidBodies[i].totalForce += force;
+	rigidBodies[i].torq += cross(loc- rigidBodies[i].boxCenter, force);
+}
+
+void RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass)
+{
+	rigidBody newElement;
+	newElement.boxCenter=position;
+	newElement.size = size;
+	newElement.mass = mass;
+	newElement.angularVelocity = Vec3(0.0);
+	newElement.lineerVelocity = Vec3(0.0);
+	newElement.totalForce = 0;
+
+	Vec3 cuboidInertiaVals(0.0);//I0
+	cuboidInertiaVals.x = (1.0 / 12.0 )* mass * (size.y * size.y + size.z * size.z); //I(0,0)
+	cuboidInertiaVals.y = (1.0 / 12.0) * mass * (size.x * size.x + size.z * size.z);//I(1,1)
+	cuboidInertiaVals.z = (1.0 / 12.0) * mass * (size.x * size.x + size.y * size.y);  //I(2,2)
+
+	newElement.inverseInertiaTensor.initScaling(cuboidInertiaVals.x, cuboidInertiaVals.y, cuboidInertiaVals.z); //set inertia tensor values //!!!!!!!!!!!possible error!!!!!!!!!!!!!!!!!!
+	newElement.inverseInertiaTensor = newElement.inverseInertiaTensor.inverse();
+
+	rigidBodies.push_back(newElement);
+}
+
+void RigidBodySystemSimulator::setOrientationOf(int i, Quat orientation)
+{
+	rigidBodies[i].orientation = orientation;
+}
+
+void RigidBodySystemSimulator::setVelocityOf(int i, Vec3 velocity)
+{
+	rigidBodies[i].lineerVelocity = velocity;
+}
+
+Vec3 RigidBodySystemSimulator::getTotalForce(int i)
+{
+	return rigidBodies[i].totalForce;
+}
+
+float RigidBodySystemSimulator::getMass(int i)
+{
+	return rigidBodies[i].mass;
+}
+
+void RigidBodySystemSimulator::implementEuler(float timeStep,int i)
+{
+	Vec3 x=this->getPositionOfRigidBody(i);
+	Vec3 v = this->getLinearVelocityOfRigidBody(i);
+	Vec3 acceleration=this->getTotalForce(i)/this->getMass(i);
+
+	rigidBodies[i].boxCenter = x + timeStep * v;
+	rigidBodies[i].lineerVelocity = v + timeStep * acceleration;
+}
+
+void RigidBodySystemSimulator::updateOrientation(int i, float timestep)
+{
+	auto r = rigidBodies[i].orientation;
+	auto w = rigidBodies[i].angularVelocity;
+	Quat w_q = Quat(w.x, w.y, w.z,0);
+
+	rigidBodies[i].orientation = (r + (timestep / 2) * w_q * r).unit();
+}
+
+void RigidBodySystemSimulator::updateAngularVelocity(int i,float timestep)
+{
+	rigidBody object = rigidBodies[i];
+
+	//update angular momentum
+	object.angularMomentum += timestep * object.torq;
+
+	//calculate current inertia tensor
+	Mat4 rotation = object.orientation.getRotMat();
+	Mat4 rotation_t = Mat4(rotation);
+	rotation_t.transpose();
+	Mat4 currentInverseInertia = rotation * object.inverseInertiaTensor * rotation_t;
+
+	//update angular velocity
+	rigidBodies[i].angularVelocity = currentInverseInertia * object.angularMomentum;
+}
+
+void RigidBodySystemSimulator::updateWorldPosition(int i)
+{
+	/*rigidBody object = rigidBodies[i];
+	Mat4 rotation = object.orientation.getRotMat();
+	object.boxCenter = rotation * object.boxCenter;*/
+}
+
+void RigidBodySystemSimulator::setDemo1()
+{
+	rigidBodies.clear();
+	addRigidBody(Vec3(0.0), Vec3(1, 0.6, 0.5), 2);
+	Quat q(Vec3(0, 0, 1), M_PI * 0.5f);
+	setOrientationOf(rigidBodies.size() - 1, q);
+
+	applyForceOnBody(0,Vec3(0.3,0.5,0.25),Vec3(1,1,0));
+}
+
+void RigidBodySystemSimulator::setDemo2()
+{
+}
+void RigidBodySystemSimulator::setDemo3()
+{
+}
+void RigidBodySystemSimulator::setDemo4()
+{
+}
