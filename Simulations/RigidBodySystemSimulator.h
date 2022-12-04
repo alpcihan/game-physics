@@ -16,7 +16,7 @@ public:
 	void initUI(DrawingUtilitiesClass * DUC);
 	void reset();
 	void drawFrame(ID3D11DeviceContext* pd3dImmediateContext);
-	void notifyCaseChanged(int testCase);
+	void notifyCaseChanged(int testcase);
 	void externalForcesCalculations(float timeElapsed);
 	void simulateTimestep(float timestep);
 	void onClick(int x, int y);
@@ -37,13 +37,13 @@ public:
 	void implementEuler(int i, float timeStep);
 	void updateOrientation(int i, float timestep);
 	void updateAngularVelocity(int i,float timestep);
-	void updateWorldPosition(int i);
+	Vec3 getWorldSpaceVelocity(int i, Vec3 loc);
+	Mat4 getObject2WorldSpaceMatrix(const rigidBody& object);
 
 	void setDemo1();
 	void setDemo2();
 	void setDemo3();
 	void setDemo4();
-
 
 private:
 	// Attributes

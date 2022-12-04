@@ -5,6 +5,10 @@
 using std::vector;
 
 struct rigidBody {
+public:
+//	rigidBody()=default;
+//	rigidBody(const rigidBody&) = delete;
+
 	Vec3 boxCenter;
 	Vec3 size;
 	float mass;
