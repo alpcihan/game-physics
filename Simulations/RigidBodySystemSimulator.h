@@ -39,6 +39,7 @@ public:
 	void updateAngularVelocity(int i,float timestep);
 	Vec3 getWorldSpaceVelocity(int i, Vec3 loc);
 	Mat4 getObject2WorldSpaceMatrix(const rigidBody& object);
+	void applyForceOfCollusions(float timestep);
 
 	void setDemo1();
 	void setDemo2();

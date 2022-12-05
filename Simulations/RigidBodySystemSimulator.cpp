@@ -56,7 +56,7 @@ Mat4 RigidBodySystemSimulator::getObject2WorldSpaceMatrix(const rigidBody& objec
 void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
 
-	for (unsigned int i=0; i < this->getNumberOfRigidBodies(); ++i) {
+	for ( int i=0; i < this->getNumberOfRigidBodies(); ++i) {
 
 		Mat4 transform=getObject2WorldSpaceMatrix(rigidBodies[i]);
 		DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
@@ -107,8 +107,8 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 		Vec3 inputView = Vec3((float)mouseDiff.x, (float)-mouseDiff.y, 0);
 		Vec3 inputWorld = worldViewInv.transformVectorNormal(inputView);
 
-		Vec3 inputstartView = Vec3((float)m_trackmouse.x, (float)m_trackmouse.y, 0);
-		Vec3 inputstartWorld = worldViewInv.transformVector(inputstartView);
+		Vec3 inputstartView = Vec3((float)m_oldtrackmouse.x, (float)m_oldtrackmouse.y, 0);
+		Vec3 inputstartWorld = worldViewInv.transformVectorNormal(inputstartView);
 		// find a proper scale!
 		float inputScale = 0.0001f;
 		inputWorld = inputWorld * inputScale;
@@ -121,10 +121,43 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 	}
 }
 
+void RigidBodySystemSimulator::applyForceOfCollusions(float timestep) {
+	for (int i = 0; i < this->getNumberOfRigidBodies() - 1; ++i) {
+		for ( int j = i + 1; j < this->getNumberOfRigidBodies(); ++j) {
+			auto info = checkCollisionSAT(getObject2WorldSpaceMatrix(rigidBodies[i]), getObject2WorldSpaceMatrix(rigidBodies[j]));
+			if (info.isValid) {
+
+				float c = 1.0;
+				auto n = info.normalWorld;
+
+				//Objects
+				rigidBody& A = rigidBodies[i];
+				rigidBody& B = rigidBodies[j];
+
+				//Relative velocity
+				Vec3 V_A = this->getWorldSpaceVelocity(i, info.collisionPointWorld);
+				Vec3 V_B = this->getWorldSpaceVelocity(j, info.collisionPointWorld);
+				Vec3 V_rel = V_A - V_B;
+
+				//Collusion points in local space
+				Vec3 X_A = info.collisionPointWorld - A.boxCenter;
+				Vec3 X_B = info.collisionPointWorld - B.boxCenter;
+
+				auto J = (-(1 + c) * V_rel * n) / (A.onedivMass + B.onedivMass + (cross(A.inverseInertiaTensor * (cross(X_A, n)), X_A) + cross(B.inverseInertiaTensor * (cross(X_B, n)), X_B)) * n);
+
+				A.lineerVelocity += J * n / A.mass;
+				B.lineerVelocity -= J * n / B.mass;
+
+				A.angularMomentum += cross(X_A, J * n);
+				B.angularMomentum -= cross(X_B, J * n);
+			}
+		}
+	}
+}
+
 void RigidBodySystemSimulator::simulateTimestep(float timestep)
 {
-
-	for (unsigned int i = 0; i < this->getNumberOfRigidBodies(); ++i) {
+	for ( int i = 0; i < this->getNumberOfRigidBodies(); ++i) {
 		implementEuler(i, timestep);
 		updateOrientation(i, timestep);
 		updateAngularVelocity(i, timestep);
@@ -132,13 +165,7 @@ void RigidBodySystemSimulator::simulateTimestep(float timestep)
 		rigidBodies[i].totalForce = 0;
 		rigidBodies[i].torq = 0;
 	}
-
-	for (int i = 0; i < this->getNumberOfRigidBodies()-1; ++i) {
-		for (unsigned int j = i+1; j < this->getNumberOfRigidBodies(); ++j) {
-			auto info =  checkCollisionSAT(getObject2WorldSpaceMatrix(rigidBodies[i]), getObject2WorldSpaceMatrix(rigidBodies[j]));
-			if(info.isValid)std::cout << "collided!!!!!!!!!" << "\n";
-		}
-	}
+	applyForceOfCollusions(timestep);
 }
 
 void RigidBodySystemSimulator::onClick(int x, int y)
@@ -190,6 +217,7 @@ void RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass)
 	newElement.angularVelocity = Vec3(0.0);
 	newElement.lineerVelocity = Vec3(0.0);
 	newElement.totalForce = 0;
+	newElement.onedivMass = 1.0 / mass;
 
 	Vec3 cuboidInertiaVals(0.0);
 	cuboidInertiaVals.x = (1.0 / 12.0) * mass * (size.y * size.y + size.z * size.z);
@@ -261,7 +289,7 @@ Vec3 RigidBodySystemSimulator::getWorldSpaceVelocity(int i,Vec3 loc)
 
 void RigidBodySystemSimulator::setDemo1()
 {
-	rigidBodies.clear();
+	rigidBodies.clear(); 
 
 	addRigidBody(Vec3(0.0), Vec3(1, 0.6, 0.5), 2);
 	setOrientationOf(0, Quat(Vec3(0, 0, 1), M_PI * 0.5f));
@@ -292,7 +320,6 @@ void RigidBodySystemSimulator::setDemo3()
 	addRigidBody(Vec3(1.0,0.5,0.0), Vec3(1, 0.6, 0.5), 2);
 	setOrientationOf(1, Quat(Vec3(0, 0, 1), M_PI * 0.5f));
 	applyForceOnBody(1, Vec3(0.3, 0.5, 0.25), Vec3(-10, 1, 0));
-	
 
 }
 void RigidBodySystemSimulator::setDemo4()

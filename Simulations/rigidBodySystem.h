@@ -1,8 +1,5 @@
 #pragma once
-#include <vector>
 #include "Simulator.h"
-
-using std::vector;
 
 struct rigidBody {
 public:
@@ -19,4 +16,5 @@ public:
 	Mat4 inverseInertiaTensor;//current inertia tensor
 	Vec3 torq;//q
 	Vec3 totalForce;//F
+	float onedivMass;
 };
