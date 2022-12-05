@@ -1,8 +1,6 @@
 #include "RigidBodySystemSimulator.h"
 #include "collisionDetect.h"
 
-
-
 RigidBodySystemSimulator::RigidBodySystemSimulator()
 {
 	this->m_iTestCase = 0;
@@ -19,16 +17,12 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 	this->DUC = DUC;
 	switch (this->m_iTestCase) {
 	case 0:
-		//Demo1
 		break;
 	case 1:
-		//Demo2
 		break;
 	case 2:
-		//Demo3
 		break;
 	case 3:
-		//Demo4
 		break;
 	default:
 		break;
@@ -99,74 +93,94 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 	Point2D mouseDiff;
 	mouseDiff.x = m_trackmouse.x - m_oldtrackmouse.x;
 	mouseDiff.y = m_trackmouse.y - m_oldtrackmouse.y;
+
 	if (mouseDiff.x != 0 || mouseDiff.y != 0)
 	{
 		Mat4 worldViewInv = Mat4(DUC->g_camera.GetWorldMatrix() * DUC->g_camera.GetViewMatrix());
 		worldViewInv = worldViewInv.inverse();
 		Vec3 inputView = Vec3((float)mouseDiff.x, (float)mouseDiff.y, 0);
 		Vec3 inputWorld = worldViewInv.transformVectorNormal(inputView);
-
-		Vec3 inputstartView = Vec3((float)m_oldtrackmouse.x, (float)m_oldtrackmouse.y, 0);
-		Vec3 inputstartWorld = worldViewInv.transformVectorNormal(inputstartView);
+		
 		// find a proper scale!
 		float inputScale = 0.01f;
-		inputWorld = inputWorld * inputScale;
-		inputstartWorld = inputstartWorld * inputScale;
+		Vec3 inputWorldScaled = inputWorld * inputScale;
+		inputWorldScaled *= Vec3(1, -1, 1);
+
+		Vec3 dir = norm(inputWorldScaled);
 		
-		std::cout << "oldtrackmouse(" << m_trackmouse.x << "," << m_trackmouse.y << ")\n";
-
-
-		std::cout << "StartPOint(" << inputstartWorld.x << "," << inputstartWorld.y << "," << inputstartWorld.z << ")\n";
-		std::cout << "Force(" << inputWorld.x << "," << inputWorld.y << "," << inputWorld.z << ")\n";
-
 		for (int i = 0; i < this->getNumberOfRigidBodies(); ++i) {
+			if (rigidBodies[i].isStatic) continue;
 
-			this->applyForceOnBody(i, inputstartWorld, inputWorld);
+			rigidBodies[i].totalForce += inputWorldScaled;
 
+			Vec3 pos = norm(inputWorld - rigidBodies[i].boxCenter) + rigidBodies[i].boxCenter;
+			rigidBodies[i].torq += cross(pos, dir*0.01);
 		}
 	}
 }
 
 void RigidBodySystemSimulator::applyForceOfCollusions(float timestep) {
-	for (int i = 0; i < this->getNumberOfRigidBodies() - 1; ++i) {
-		for ( int j = i + 1; j < this->getNumberOfRigidBodies(); ++j) {
+	const int rbCount = rigidBodies.size();
+
+	if (rbCount <= 1)
+	{
+		return;
+	}
+
+	for (int i=0; i < rbCount-1; i++) {
+		for (int j=i+1; j<rbCount; j++) {
 			CollisionInfo info = checkCollisionSAT(getObject2WorldSpaceMatrix(rigidBodies[i]), getObject2WorldSpaceMatrix(rigidBodies[j]));
 			if (info.isValid) {
+				rigidBody& a = rigidBodies[i];
+				rigidBody& b = rigidBodies[j];
+				const Vec3 n = info.normalWorld;
+				const float d = info.depth;
 
-				float c = 1.0;
-				Vec3 n = info.normalWorld;
+				Vec3 xA = info.collisionPointWorld - a.boxCenter;
+				Vec3 xB = info.collisionPointWorld - b.boxCenter;
 
-				//Objects
-				rigidBody& A = rigidBodies[i];
-				rigidBody& B = rigidBodies[j];
+				Vec3 vA = a.lineerVelocity + cross(a.angularVelocity, xA);
+				Vec3 vB = b.lineerVelocity + cross(b.angularVelocity, xB);
+				Vec3 vRel = vA - vB;
 
-				//Relative velocity
-				Vec3 V_A = this->getWorldSpaceVelocity(i, info.collisionPointWorld);
-				Vec3 V_B = this->getWorldSpaceVelocity(j, info.collisionPointWorld);
-				Vec3 V_rel = V_A - V_B;
+				float c = 0.01f;
+				auto dotRelNormal = dot(vRel, n);
 
-				if (V_rel * n > 0.0) continue;
+				float inverseMassSum = (1.0 / a.mass) + (1.0 / b.mass);
 
+				Mat4 invA = a.inverseInertiaTensor;
+				Mat4 invB = b.inverseInertiaTensor;
 
-				//Collusion points in local space
-				Vec3 X_A = info.collisionPointWorld - A.boxCenter;
-				Vec3 X_B = info.collisionPointWorld - B.boxCenter;
+				auto ixnxA = cross(invA*(cross(xA, n)), xA);
+				auto ixnxB = cross(invB*(cross(xB, n)), xB);
 
-				auto J = (-(1 + c) * V_rel * n) / (A.onedivMass + B.onedivMass + (cross(A.inverseInertiaTensor * (cross(X_A, n)), X_A) + cross(B.inverseInertiaTensor * (cross(X_B, n)), X_B)) * n);
+				auto JNumerator = -(1. + c) * dotRelNormal;
+				auto JDenominator = inverseMassSum + dot((ixnxA + ixnxB), n);
 
-				A.lineerVelocity += J * n / A.mass;
-				B.lineerVelocity -= J * n / B.mass;
+				auto J = JNumerator / JDenominator;
+				auto Jn = J * n;
 
-				A.angularMomentum += cross(X_A, J * n);
-				B.angularMomentum -= cross(X_B, J * n);
+				// update position
+				if (!a.isStatic)
+				{
+					a.boxCenter += (n * d) * 0.5;
+					a.lineerVelocity += Jn / a.mass;
+					a.angularMomentum += cross(xA, Jn);
+				}
+
+				if (!b.isStatic)
+				{
+					b.boxCenter -= (n * d) * 0.5;
+					b.lineerVelocity -= Jn / b.mass;
+					b.angularMomentum -= cross(xA, Jn);
+				}
 			}
 		}
 	}
 }
 
 void RigidBodySystemSimulator::simulateTimestep(float timestep)
-{
-	applyForceOfCollusions(timestep);
+{	
 	for ( int i = 0; i < this->getNumberOfRigidBodies(); ++i) {
 		implementEuler(i, timestep);
 		updateOrientation(i, timestep);
@@ -175,6 +189,8 @@ void RigidBodySystemSimulator::simulateTimestep(float timestep)
 		rigidBodies[i].totalForce = 0;
 		rigidBodies[i].torq = 0;
 	}
+
+	applyForceOfCollusions(timestep);
 }
 
 void RigidBodySystemSimulator::onClick(int x, int y)
@@ -305,9 +321,6 @@ void RigidBodySystemSimulator::setDemo1()
 	applyForceOnBody(0,Vec3(0.3,0.5,0.25),Vec3(1,1,0));
 
 	simulateTimestep(2.0);
-	std::cout << getWorldSpaceVelocity(0, Vec3(-0.3, -0.5, -0.25))<<"\n";
-
-	rigidBodies.clear();
 }
 
 void RigidBodySystemSimulator::setDemo2()
@@ -315,39 +328,43 @@ void RigidBodySystemSimulator::setDemo2()
 	rigidBodies.clear();
 
 	addRigidBody(Vec3(0.0), Vec3(1, 0.6, 0.5), 2);
-	setOrientationOf(0, Quat(Vec3(0, 0, 1), M_PI * 0.5f));
+	setOrientationOf(0, Quat(Vec3(0.1, 0.5, 0.3), M_PI * 0.275f));
 	applyForceOnBody(0, Vec3(0.3, 0.5, 0.25), Vec3(1, 1, 0));
 }
 void RigidBodySystemSimulator::setDemo3()
 {
 	rigidBodies.clear();
 
-	addRigidBody(Vec3(0.0), Vec3(1, 0.6, 0.5), 2);
-	setOrientationOf(0, Quat(Vec3(0, 0, 1), M_PI * 0.5f));
-	applyForceOnBody(0, Vec3(0.3, 0.5, 0.25), Vec3(10, 1, 0));
+	addRigidBody(Vec3(0.25, 1, 0), Vec3(1.0, 0.6, 0.5), 2.0);
+	addRigidBody(Vec3(-0.30, -1, 0), Vec3(1.0, 0.6, 0.5), 2.0);
 
-	addRigidBody(Vec3(1.0,0.5,0.0), Vec3(1, 0.6, 0.5), 2);
-	setOrientationOf(1, Quat(Vec3(0, 0, 1), M_PI * 0.5f));
-	applyForceOnBody(1, Vec3(0.3, 0.5, 0.25), Vec3(-10, 1, 0));
+	setVelocityOf(0, Vec3(0, -1, 0));
+	setVelocityOf(1, Vec3(0, 1, 0));
+
+	setOrientationOf(1, Quat(Vec3(0, 1, 0), M_PI * .157));
 
 }
 void RigidBodySystemSimulator::setDemo4()
 {
 	rigidBodies.clear();
 
-	addRigidBody(Vec3(0.0), Vec3(1, 0.6, 0.5), 2);
-	setOrientationOf(0, Quat(Vec3(0, 0, 1), M_PI * 0.5f));
-	applyForceOnBody(0, rigidBodies[0].boxCenter, -100*rigidBodies[0].boxCenter);
-	
-	addRigidBody(Vec3(-1,-0.5,0), Vec3(1, 0.6, 0.5), 2);
-	setOrientationOf(1, Quat(Vec3(0, 0, 1), M_PI * 0.5f));
-	applyForceOnBody(1, rigidBodies[1].boxCenter, -100*rigidBodies[1].boxCenter);
+	addRigidBody(Vec3(0,0,0), Vec3(1.0,0.6,0.5), 2.0);
 
-	addRigidBody(Vec3(0,-1,0), Vec3(1, 0.6, 0.5), 2);
-	applyForceOnBody(2, rigidBodies[2].boxCenter, -100*rigidBodies[2].boxCenter);
+	addRigidBody(Vec3(2,2,2), Vec3(1.0,0.6,0.5), 2.0);
+	setVelocityOf(1, Vec3(-1, -1, -1));
+	setOrientationOf(1, Quat(Vec3(0.8, 0.7, 0), M_PI * .35));
 
-	addRigidBody(Vec3(1,0.5,0), Vec3(1, 0.6, 0.5), 2);
-	setOrientationOf(3, Quat(Vec3(0, 0, 1), M_PI * 0.5f));
-	applyForceOnBody(3, rigidBodies[3].boxCenter, -100*rigidBodies[3].boxCenter);
+	addRigidBody(Vec3(3,0,0), Vec3(1.0,0.6,0.5), 2.0);
+	setVelocityOf(2, Vec3(-1, 0, 0));
+	setOrientationOf(2, Quat(Vec3(1, 0, 1), M_PI * .25));
 
+	addRigidBody(Vec3(-2, -0.5, -2), Vec3(1.0,0.6,0.5), 2.0);
+	setVelocityOf(3, Vec3(1, 0.1, 1));
+	setOrientationOf(3, Quat(Vec3(0, 1, 1), M_PI * .4));
+
+	addRigidBody(Vec3(0, -1, 0), Vec3(5.0, 0.25, 5.0), 2.0);
+	rigidBodies[4].isStatic = true;
+
+	addRigidBody(Vec3(-2.5, 1.5, 0), Vec3(0.25, 5, 5.0), 2.0);
+	rigidBodies[5].isStatic = true;
 }

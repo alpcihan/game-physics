@@ -17,4 +17,5 @@ public:
 	Vec3 torq;//q
 	Vec3 totalForce;//F
 	float onedivMass;
+	bool isStatic = false;
 };
