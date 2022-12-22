@@ -79,6 +79,9 @@ void DiffusionSimulator::notifyCaseChanged(int testCase)
 		break;
 	case 1:
 		cout << "Implicit solver!\n";
+		delete T;
+		T = new Grid(m_nx, m_ny);
+		reset();
 		break;
 	default:
 		cout << "Empty Test!\n";
@@ -86,38 +89,40 @@ void DiffusionSimulator::notifyCaseChanged(int testCase)
 	}
 }
 
-Grid* DiffusionSimulator::diffuseTemperatureExplicit(Real dTime) {//add your own parameters
-	// to be implemented
-	// make sure that the temperature in boundary cells stays zero
-
-	for (int w = 1; w < T->w()-1; w++)
-	{
-		for (int h = 1; h < T->h()-1; h++)
-		{
-			Real u, uxp, uxn, uyp, uyn, d2x, d2y;
-
+Grid* DiffusionSimulator::diffuseTemperatureExplicit(Real dTime) {
+	// Iterate through all non-boundary grid points
+	for (int w = 1; w < T->w() - 1; w++) {
+		for (int h = 1; h < T->h() - 1; h++) {
+			// Get the temperature values at the current grid point and its neighbors
+			Real u, uxp, uxn, uyp, uyn;
 			u = T->get(w, h);
-			uxp = T->get(w+1, h);
-			uxn = T->get(w-1, h);
-			uyp = T->get(w, h+1);
-			uyn = T->get(w, h-1);
+			uxp = T->get(w + 1, h);
+			uxn = T->get(w - 1, h);
+			uyp = T->get(w, h + 1);
+			uyn = T->get(w, h - 1);
+
+			// Calculate the second derivatives of the temperature in the x and y directions using finite differences
+			Real d2x, d2y;
 			d2x = uxp - 2 * u + uxn;
 			d2y = uyp - 2 * u + uyn;
 
-			Real result = u + m_alpha * dTime * (d2x + d2y); // TODO: check with 0.5
+			// Update the temperature at the current grid point using the explicit Euler method
+			Real result = u + m_alpha * dTime * (d2x + d2y);
 			T->set(w, h, result);
 		}
 	}
 
+	// Apply the temperature updates to the grid
 	T->applyUpdates();
 
+	// Return the updated temperature grid
 	return T;
 }
 
 void setupB(std::vector<Real>& b) {//add your own parameters
 	// to be implemented
 	//set vector B[sizeX*sizeY]
-	for (int i = 0; i < 25; i++) {
+	for (int i = 0; i < 16*16; i++) {
 		b.at(i) = 0;
 	}
 }
@@ -140,26 +145,41 @@ void fillT(Grid* grid) {//add your own parameters
 	grid->applyUpdates();
 }
 
-void setupA(SparseMatrix<Real>& A, double factor) {//add your own parameters
-	// to be implemented
-	//setup Matrix A[sizeX*sizeY*sizeZ, sizeX*sizeY*sizeZ]
-	// set with:  A.set_element( index1, index2 , value );
-	// if needed, read with: A(index1, index2);
-	// avoid zero rows in A -> set the diagonal value for boundary cells to 1.0
-	for (int i = 0; i < 25; i++) {
-		A.set_element(i, i, 1); // set diagonal
+void setupA(SparseMatrix<Real>& A, double factor, Grid* T) {
+	// Set the diagonal value for boundary cells to 1.0
+	int w = T->w();
+	int h = T->h();
+
+	for (int i = 0; i < w; i++) {
+		for (int j = 0; j < h; j++) {
+			if (i == 0 || j == 0 || i == w - 1 || j == h - 1) {
+				A.set_element(i * h + j, i * h + j, 1);
+			}
+		}
+	}
+
+	// Set the coefficients for the non-boundary cells
+	for (int i = 1; i < w - 1; i++) {
+		for (int j = 1; j < h - 1; j++) {
+			A.set_element(i * h + j, (i - 1) * h + j, -factor);
+			A.set_element(i * h + j, i * h + (j - 1), -factor);
+			A.set_element(i * h + j, i * h + j, 1 + 4 * factor);
+			A.set_element(i * h + j, i * h + (j + 1), -factor);
+			A.set_element(i * h + j, (i + 1) * h + j, -factor);
+		}
 	}
 }
+
 
 
 void DiffusionSimulator::diffuseTemperatureImplicit() {//add your own parameters
 	// solve A T = b
 	// to be implemented
-	const int N = 25;//N = sizeX*sizeY*sizeZ
+	const int N = T->w() * T->h(); // N = sizeX*sizeY
 	SparseMatrix<Real>* A = new SparseMatrix<Real>(N);
 	std::vector<Real>* b = new std::vector<Real>(N);
 
-	setupA(*A, 0.1);
+	setupA(*A, 0.0, T);
 	setupB(*b);
 
 	// perform solve
@@ -177,7 +197,12 @@ void DiffusionSimulator::diffuseTemperatureImplicit() {//add your own parameters
 	// preconditioners: 0 off, 1 diagonal, 2 incomplete cholesky
 	solver.solve(*A, *b, x, ret_pcg_residual, ret_pcg_iterations, 0);
 	// x contains the new temperature values
-	fillT(T);//copy x to T
+
+	for (int i = 0; i < T->w(); i++) {
+		for (int j = 0; j < T->h(); j++) {
+			T->set(i, j, x[j * T->w() + i]);
+		}
+	}
 }
 
 
