@@ -8,22 +8,29 @@
 class Grid
 {
 public:
+	struct SpherePoint {
+		bool isActive;
+		Real temp;
+	};
+
 	// Construtors
 	Grid(uint32_t w, uint32_t h);
 
 	uint32_t w() const { return m_w; }
 	uint32_t h() const { return m_h; }
 
-	void set(uint32_t w, uint32_t h, Real value) { m_T[m_w * h + w] = value; }
-	const std::vector<Real> &get() const { return m_temps; }
-	Real get(uint32_t w, uint32_t h) const { return m_temps[m_w * h + w]; }
-	Real get(uint32_t i) const { return m_temps[i]; }
+	void set(uint32_t w, uint32_t h, Real value) { m_T[m_w * h + w].temp = value; }
+	const std::vector<SpherePoint> &get() const { return m_temps; }
+	Real get(uint32_t w, uint32_t h) const { return m_temps[m_w * h + w].temp; }
+	Real get(uint32_t i) const { return m_temps[i].temp; }
+	bool getPointStatus(uint32_t w, uint32_t h) const { return m_temps[m_w * h + w].isActive; }
+	void setPointStatus(uint32_t w, uint32_t h, bool status) { m_temps[m_w * h + w].isActive = status; }
 
 	void applyUpdates();
 
 private:
-	std::vector<Real> m_temps;
-	std::vector<Real> m_T;
+	std::vector<SpherePoint> m_temps;
+	std::vector<SpherePoint> m_T;
 	uint32_t m_w, m_h;
 };
 

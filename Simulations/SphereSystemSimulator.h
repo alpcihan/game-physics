@@ -1,7 +1,7 @@
 #ifndef SPHSYSTEMSIMULATOR_h
 #define SPHSYSTEMSIMULATOR_h
 #include "Simulator.h"
-//#include "spheresystem.h", add your sphere system header file
+#include "spheresystem.h"
 
 #define NAIVEACC 0
 #define GRIDACC 1
@@ -31,15 +31,15 @@ protected:
 	float m_fRadius;
 	float m_fForceScaling;
 	float m_fDamping;
-	int   m_iNumSpheres;
+	//int   m_iNumSpheres;
 	
 	int   m_iKernel; // index of the m_Kernels[5], more detials in SphereSystemSimulator.cpp
 	static std::function<float(float)> m_Kernels[5];
 	
 	int   m_iAccelerator; // switch between NAIVEACC and GRIDACC, (optionally, KDTREEACC, 2)
 	
-	//SphereSystem * m_pSphereSystem; // add your own sphere system member!
-	// for Demo 3 only:
+	SphereSystem * m_pTarget; // add your own sphere system member
+							  // for Demo 3 only:
 	// you will need multiple SphereSystem objects to do comparisons in Demo 3
 	// m_iAccelerator should be ignored.
 	// SphereSystem * m_pSphereSystemGrid; 

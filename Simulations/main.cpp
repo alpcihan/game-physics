@@ -22,9 +22,9 @@ using namespace GamePhysics;
 
 //#define TEMPLATE_DEMO
 //#define MASS_SPRING_SYSTEM
-#define RIGID_BODY_SYSTEM
+//#define RIGID_BODY_SYSTEM
 //#define SPH_SYSTEM
-//#define DIFFUSION_SYSTEM
+#define DIFFUSION_SYSTEM
 
 #ifdef TEMPLATE_DEMO
 #include "TemplateSimulator.h"
