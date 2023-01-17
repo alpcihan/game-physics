@@ -6,6 +6,13 @@
 
 #define TESTCASEUSEDTORUNTEST 2
 
+struct SphericalCollisionInfo {
+	bool isValid;
+	//Vec3 collisionPointWorld;
+	Vec3 normalWorld;
+	//float depth;
+};
+
 class RigidBodySystemSimulator:public Simulator{
 public:
 	// Construtors
@@ -42,11 +49,15 @@ public:
 	Mat4 getObject2WorldSpaceMatrix(const rigidBody& object);
 	void applyForceOfCollusions(float timestep);
 
-	void setDemo1();
+	SphericalCollisionInfo checkSphericalCollision(rigidBody& rb1, rigidBody& rb2);
+
+	/*void setDemo1();
 	void setDemo2();
 	void setDemo3();
-	void setDemo4();
+	void setDemo4();*/
 	void setProjectDemo();
+
+	
 
 private:
 	// Attributes

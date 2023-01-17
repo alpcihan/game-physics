@@ -7,9 +7,13 @@ RigidBodySystemSimulator::RigidBodySystemSimulator()
 	
 }
 
+
+
+
 const char* RigidBodySystemSimulator::getTestCasesStr()
 {
-	return "Demo1,Demo2,Demo3,Demo4";
+	//return "Demo1,Demo2,Demo3,Demo4";
+	return "Demo0";
 }
 
 void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC)
@@ -49,11 +53,14 @@ Mat4 RigidBodySystemSimulator::getObject2WorldSpaceMatrix(const rigidBody& objec
 
 void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
-
+	rigidBody rb;
 	for ( int i=0; i < this->getNumberOfRigidBodies(); ++i) {
-		Mat4 transform=getObject2WorldSpaceMatrix(rigidBodies[i]);
+		//Mat4 transform=getObject2WorldSpaceMatrix(rigidBodies[i]);
+		rb = rigidBodies[i];
 		DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
-		DUC->drawRigidBody(transform);
+		//DUC->drawRigidBody(transform);
+		
+		DUC->drawSphere(rb.center, Vec3(2*rb.radius));
 	}
 
 }
@@ -62,25 +69,29 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testcase)
 {
 	switch (testcase) {
 	case 0:
-		//Demo1
-		std::cout << "Demo1\n";
-		setDemo1();
+		std::cout << "Demo0\n";
+		setProjectDemo();
 		break;
-	case 1:
-		//Demo2
-		std::cout << "Demo2\n";
-		setDemo2();
-		break;
-	case 2:
-		//Demo3
-		std::cout << "Demo3\n";
-		setDemo3();
-		break;
-	case 3:
-		//Demo4
-		std::cout << "Demo4\n";
-		setDemo4();
-		break;
+	//case 1:
+	//	//Demo1
+	//	std::cout << "Demo1\n";
+	//	setDemo1();
+	//	break;
+	//case 2:
+	//	//Demo2
+	//	std::cout << "Demo2\n";
+	//	setDemo2();
+	//	break;
+	//case 3:
+	//	//Demo3
+	//	std::cout << "Demo3\n";
+	//	setDemo3();
+	//	break;
+	//case 4:
+	//	//Demo4
+	//	std::cout << "Demo4\n";
+	//	setDemo4();
+	//	break;
 	default:
 		break;
 	}
@@ -119,6 +130,19 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 	}
 }
 
+
+SphericalCollisionInfo RigidBodySystemSimulator::checkSphericalCollision(rigidBody& rb1, rigidBody& rb2) {
+	SphericalCollisionInfo info;
+
+	Vec3 centerDiff = rb2.center - rb1.center;
+	float euclideanDistance = centerDiff.squaredDistanceTo(Vec3(0.0));
+	info.isValid = euclideanDistance < (rb1.radius + rb2.radius);
+	//info.collisionPointWorld = rb1.center + (rb1.radius / (rb1.radius + rb2.radius)) * (rb2.center - rb1.center);
+	info.normalWorld = -centerDiff/euclideanDistance;         // the direction of the impulse to A, negative of the collision face of A
+	
+	return info;
+}
+
 void RigidBodySystemSimulator::applyForceOfCollusions(float timestep) {
 	const int rbCount = rigidBodies.size();
 
@@ -129,51 +153,65 @@ void RigidBodySystemSimulator::applyForceOfCollusions(float timestep) {
 
 	for (int i=0; i < rbCount-1; i++) {
 		for (int j=i+1; j<rbCount; j++) {
-			CollisionInfo info = checkCollisionSAT(getObject2WorldSpaceMatrix(rigidBodies[i]), getObject2WorldSpaceMatrix(rigidBodies[j]));
+			//CollisionInfo info = checkCollisionSAT(getObject2WorldSpaceMatrix(rigidBodies[i]), getObject2WorldSpaceMatrix(rigidBodies[j]));
+			//if (info.isValid) {
+			//	rigidBody& a = rigidBodies[i];
+			//	rigidBody& b = rigidBodies[j];
+			//	const Vec3 n = info.normalWorld;
+			//	const float d = info.depth;
+
+			//	Vec3 xA = info.collisionPointWorld - a.center;
+			//	Vec3 xB = info.collisionPointWorld - b.center;
+
+			//	Vec3 vA = a.lineerVelocity + cross(a.angularVelocity, xA);
+			//	Vec3 vB = b.lineerVelocity + cross(b.angularVelocity, xB);
+			//	Vec3 vRel = vA - vB;
+
+			//	float c = 0.01f;
+			//	auto dotRelNormal = dot(vRel, n);
+
+			//	float inverseMassSum = (1.0 / a.mass) + (1.0 / b.mass);
+
+			//	Mat4 invA = a.inverseInertiaTensor;
+			//	Mat4 invB = b.inverseInertiaTensor;
+
+			//	auto ixnxA = cross(invA*(cross(xA, n)), xA);
+			//	auto ixnxB = cross(invB*(cross(xB, n)), xB);
+
+			//	auto JNumerator = -(1. + c) * dotRelNormal;
+			//	auto JDenominator = inverseMassSum + dot((ixnxA + ixnxB), n);
+
+			//	auto J = JNumerator / JDenominator;
+			//	auto Jn = J * n;
+
+			//	// update position
+			//	if (!a.isStatic)
+			//	{
+			//		a.center += (n * d) * 0.5;
+			//		a.lineerVelocity += Jn / a.mass;
+			//		a.angularMomentum += cross(xA, Jn);
+			//	}
+
+			//	if (!b.isStatic)
+			//	{
+			//		b.center -= (n * d) * 0.5;
+			//		b.lineerVelocity -= Jn / b.mass;
+			//		b.angularMomentum -= cross(xA, Jn);
+			//	}
+			//}
+
+			SphericalCollisionInfo info = checkSphericalCollision(rigidBodies[i], rigidBodies[j]);
+
 			if (info.isValid) {
-				rigidBody& a = rigidBodies[i];
-				rigidBody& b = rigidBodies[j];
-				const Vec3 n = info.normalWorld;
-				const float d = info.depth;
+				std::cout << "COLLISION!\n";
+				std::cout << info.normalWorld << "\n\n";
 
-				Vec3 xA = info.collisionPointWorld - a.center;
-				Vec3 xB = info.collisionPointWorld - b.center;
-
-				Vec3 vA = a.lineerVelocity + cross(a.angularVelocity, xA);
-				Vec3 vB = b.lineerVelocity + cross(b.angularVelocity, xB);
-				Vec3 vRel = vA - vB;
-
-				float c = 0.01f;
-				auto dotRelNormal = dot(vRel, n);
-
-				float inverseMassSum = (1.0 / a.mass) + (1.0 / b.mass);
-
-				Mat4 invA = a.inverseInertiaTensor;
-				Mat4 invB = b.inverseInertiaTensor;
-
-				auto ixnxA = cross(invA*(cross(xA, n)), xA);
-				auto ixnxB = cross(invB*(cross(xB, n)), xB);
-
-				auto JNumerator = -(1. + c) * dotRelNormal;
-				auto JDenominator = inverseMassSum + dot((ixnxA + ixnxB), n);
-
-				auto J = JNumerator / JDenominator;
-				auto Jn = J * n;
-
-				// update position
-				if (!a.isStatic)
-				{
-					a.center += (n * d) * 0.5;
-					a.lineerVelocity += Jn / a.mass;
-					a.angularMomentum += cross(xA, Jn);
-				}
-
-				if (!b.isStatic)
-				{
-					b.center -= (n * d) * 0.5;
-					b.lineerVelocity -= Jn / b.mass;
-					b.angularMomentum -= cross(xA, Jn);
-				}
+				// COLLISION YONU DENEMESI, EKLENEN HIZ/FORCE MEVZULARI DEGISECEK
+				rigidBodies[i].lineerVelocity += 0.3 * info.normalWorld;
+				rigidBodies[j].lineerVelocity -= 0.3 * info.normalWorld;
+			}
+			else {
+				//std::cout << "no collision!\n";
 			}
 		}
 	}
@@ -258,6 +296,7 @@ void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
 void RigidBodySystemSimulator::addRigidBody(Vec3 position, float radius, int mass)
 {
 	rigidBody newRb;
+	newRb.center = position;
 	newRb.radius = radius;
 	newRb.mass = mass;
 	newRb.angularVelocity = Vec3(0.0);
@@ -394,6 +433,13 @@ Vec3 RigidBodySystemSimulator::getWorldSpaceVelocity(int i,Vec3 loc)
 
 void RigidBodySystemSimulator::setProjectDemo()
 {
+	std::cout << "Project Demo!\n";
 	rigidBodies.clear();
+
+	addRigidBody(Vec3(-1, 0, 0), 0.1, 2.0);
+	setVelocityOf(0, Vec3(0.3, 0, 0));
+
+	addRigidBody(Vec3(1, 0, 0), 0.1, 2.0);
 	
 }
+
