@@ -5,13 +5,17 @@ using namespace std;
 Grid::Grid(uint32_t w = 16, uint32_t h = 16)
 	: m_w(w), m_h(h)
 {
-	m_temps = std::vector<Real>(w * h, 0);
-	m_T = std::vector<Real>(w * h, 0);
+	SpherePoint initVals;
+	initVals.isActive = true;
+	initVals.temp = 0;
+
+	m_temps = std::vector<SpherePoint>(w * h, initVals);
+	m_T = std::vector<SpherePoint>(w * h, initVals);
 }
 
 void Grid::applyUpdates()
 {
-	std::vector<Real> _T = std::move(m_temps);
+	std::vector<SpherePoint> _T = std::move(m_temps);
 	m_temps = std::move(m_T);
 	m_T = std::move(_T);
 }
@@ -103,6 +107,12 @@ Grid *DiffusionSimulator::diffuseTemperatureExplicit(Real dTime)
 	{
 		for (int h = 1; h < T->h() - 1; h++)
 		{
+
+			if (T->getPointStatus(w,h) == false) {
+				T->set(w, h, 0);
+				continue;
+			}
+				
 			// Get the temperature values at the current grid point and its neighbors
 			Real u, uxp, uxn, uyp, uyn;
 			u = T->get(w, h);
@@ -151,6 +161,15 @@ void fillT(Grid *grid)
 	{
 		for (int h = 1; h < grid->h() - 1; h++)
 		{
+#ifdef DEBUG // UE for testing
+
+			if (w >= (grid->w() / 2 - grid->w() / 4) && w <= (grid->w() / 2 + grid->w() / 4) && h >= (grid->h() / 2 - grid->h() / 4) && w <= (grid->h() / 2 + grid->h() / 4)) {
+
+				grid->setPointStatus(w,h, false);
+				grid->set(w, h, 0);
+				continue;
+			}
+#endif // DEBUG
 			grid->set(w, h, randTemp(eng));
 		}
 	}
@@ -256,6 +275,10 @@ void DiffusionSimulator::drawObjects()
 	{
 		for (int h = 0; h < T->h(); h++)
 		{
+			if (T->getPointStatus(w, h) == false) {
+				continue;
+			}
+			
 			Real t = T->get(w, h);
 			Vec3 color = Vec3(t, 0, -t);
 
