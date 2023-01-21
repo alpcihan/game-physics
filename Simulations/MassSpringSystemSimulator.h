@@ -50,7 +50,8 @@ private:
 	int m_iIntegrator;
 
 	// UI Attributes
-	Vec3 m_externalForce;
+	Vec3 
+		Force;
 	Point2D m_mouse;
 	Point2D m_trackmouse;
 	Point2D m_oldtrackmouse;

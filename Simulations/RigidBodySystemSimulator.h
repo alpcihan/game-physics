@@ -35,6 +35,7 @@ public:
 	void setVelocityOf(int i, Vec3 velocity);
 	Vec3 getTotalForce(int i);
 	float getMass(int i);
+	void applyGravityToAll();
 
 	void implementEuler(int i, float timeStep);
 	void updateOrientation(int i, float timestep);
@@ -63,5 +64,7 @@ private:
 	Point2D m_mouse;
 	Point2D m_trackmouse;
 	Point2D m_oldtrackmouse;
+
+	Vec3 f_gravityAcc = Vec3(0, -0.2, 0);
 	};
 #endif

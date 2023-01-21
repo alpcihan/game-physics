@@ -258,9 +258,8 @@ void RigidBodySystemSimulator::onClick(int x, int y)
 
 	Vec3 cameraFrontVec = - cameraPos / sqrt(cameraPos.squaredDistanceTo(Vec3(0.0)));
 	Vec3 bulletPosition = cameraPos + 0.7 * cameraFrontVec;
-	Vec3 bulletVelocity = 3 * cameraFrontVec;
+	Vec3 bulletVelocity = 7 * cameraFrontVec;
 	
-	std::cout << cameraPos << "\t" << cameraFrontVec << "\t" << bulletPosition << std::endl;
 	//std::cout << Vec3() << std::endl;
 	
 
@@ -370,10 +369,19 @@ float RigidBodySystemSimulator::getMass(int i)
 	return rigidBodies[i].mass;
 }
 
+void RigidBodySystemSimulator::applyGravityToAll() {
+	
+	for (int i = 0; i < this->getNumberOfRigidBodies(); ++i) {
+		applyForceOnBody(i, rigidBodies[i].center, rigidBodies[i].mass * f_gravityAcc);
+	}
+}
+
 void RigidBodySystemSimulator::implementEuler(int i, float timeStep)
 {
 	rigidBodies[i].center += timeStep * rigidBodies[i].lineerVelocity;
 	rigidBodies[i].lineerVelocity += timeStep * rigidBodies[i].totalForce / rigidBodies[i].mass;
+
+	applyGravityToAll();
 }
 
 void RigidBodySystemSimulator::updateOrientation(int i, float timestep)
