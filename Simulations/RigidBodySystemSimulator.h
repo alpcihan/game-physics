@@ -6,12 +6,6 @@
 
 #define TESTCASEUSEDTORUNTEST 2
 
-struct SphericalCollisionInfo {
-	bool isValid;
-	//Vec3 collisionPointWorld;
-	Vec3 normalWorld;
-	//float depth;
-};
 
 class RigidBodySystemSimulator:public Simulator{
 public:
@@ -36,11 +30,12 @@ public:
 	Vec3 getAngularVelocityOfRigidBody(int i);
 	void applyForceOnBody(int i, Vec3 loc, Vec3 force);
 	//void addRigidBody(Vec3 position, Vec3 size, int mass);
-	void addRigidBody(Vec3 position, float radius, int mass);
+	size_t addRigidBody(Vec3 position, float radius, int mass);
 	void setOrientationOf(int i,Quat orientation);
 	void setVelocityOf(int i, Vec3 velocity);
 	Vec3 getTotalForce(int i);
 	float getMass(int i);
+	void applyGravityToAll();
 
 	void implementEuler(int i, float timeStep);
 	void updateOrientation(int i, float timestep);
@@ -69,5 +64,7 @@ private:
 	Point2D m_mouse;
 	Point2D m_trackmouse;
 	Point2D m_oldtrackmouse;
+
+	Vec3 f_gravityAcc = Vec3(0, -0.2, 0);
 	};
 #endif

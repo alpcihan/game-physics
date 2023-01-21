@@ -60,7 +60,7 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateConte
 		DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
 		//DUC->drawRigidBody(transform);
 		
-		DUC->drawSphere(rb.center, Vec3(2*rb.radius));
+		DUC->drawSphere(rb.center, Vec3(rb.radius));
 	}
 
 }
@@ -132,13 +132,37 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 
 
 SphericalCollisionInfo RigidBodySystemSimulator::checkSphericalCollision(rigidBody& rb1, rigidBody& rb2) {
+
 	SphericalCollisionInfo info;
 
+	info.isValid = false;
+	info.rb1VelocityChange = 0;
+	info.rb2VelocityChange = 0;
+
 	Vec3 centerDiff = rb2.center - rb1.center;
-	float euclideanDistance = centerDiff.squaredDistanceTo(Vec3(0.0));
-	info.isValid = euclideanDistance < (rb1.radius + rb2.radius);
-	//info.collisionPointWorld = rb1.center + (rb1.radius / (rb1.radius + rb2.radius)) * (rb2.center - rb1.center);
-	info.normalWorld = -centerDiff/euclideanDistance;         // the direction of the impulse to A, negative of the collision face of A
+	float euclideanDistance = sqrt(centerDiff.squaredDistanceTo(Vec3(0.0)));
+
+
+	if (euclideanDistance >= (rb1.radius + rb2.radius))
+		return info;
+		
+
+	Vec3 direction = centerDiff / euclideanDistance;
+
+
+	Vec3 velocityDiff = rb2.lineerVelocity - rb1.lineerVelocity;
+	float relativeVel = dot(velocityDiff, direction);
+
+	if (relativeVel >= 0)
+		return info;
+
+	float s1 = (2 * rb2.mass * relativeVel) / (rb1.mass + rb2.mass);
+	float s2 = (relativeVel * (rb2.mass - rb1.mass)) / (rb1.mass + rb2.mass);
+
+	info.isValid = true;
+
+	info.rb1VelocityChange = (direction * s1)/2;
+	info.rb2VelocityChange = (direction * (s2 - relativeVel))/2;
 	
 	return info;
 }
@@ -203,15 +227,8 @@ void RigidBodySystemSimulator::applyForceOfCollusions(float timestep) {
 			SphericalCollisionInfo info = checkSphericalCollision(rigidBodies[i], rigidBodies[j]);
 
 			if (info.isValid) {
-				std::cout << "COLLISION!\n";
-				std::cout << info.normalWorld << "\n\n";
-
-				// COLLISION YONU DENEMESI, EKLENEN HIZ/FORCE MEVZULARI DEGISECEK
-				rigidBodies[i].lineerVelocity += 0.3 * info.normalWorld;
-				rigidBodies[j].lineerVelocity -= 0.3 * info.normalWorld;
-			}
-			else {
-				//std::cout << "no collision!\n";
+				rigidBodies[i].lineerVelocity += info.rb1VelocityChange;
+				rigidBodies[j].lineerVelocity += info.rb2VelocityChange;
 			}
 		}
 	}
@@ -235,6 +252,20 @@ void RigidBodySystemSimulator::onClick(int x, int y)
 {
 	m_trackmouse.x = x;
 	m_trackmouse.y = y;
+
+	Vec3 cameraPos = Vec3(DUC->g_camera.GetEyePt());
+
+
+	Vec3 cameraFrontVec = - cameraPos / sqrt(cameraPos.squaredDistanceTo(Vec3(0.0)));
+	Vec3 bulletPosition = cameraPos + 0.7 * cameraFrontVec;
+	Vec3 bulletVelocity = 7 * cameraFrontVec;
+	
+	//std::cout << Vec3() << std::endl;
+	
+
+	int bulletIdx = addRigidBody(bulletPosition, 0.07, 2.0);
+	std::cout << bulletIdx;
+	setVelocityOf(bulletIdx, bulletVelocity);
 }
 
 void RigidBodySystemSimulator::onMouse(int x, int y)
@@ -293,7 +324,7 @@ void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
 //	rigidBodies.push_back(newElement);
 //}
 
-void RigidBodySystemSimulator::addRigidBody(Vec3 position, float radius, int mass)
+size_t RigidBodySystemSimulator::addRigidBody(Vec3 position, float radius, int mass)
 {
 	rigidBody newRb;
 	newRb.center = position;
@@ -314,6 +345,7 @@ void RigidBodySystemSimulator::addRigidBody(Vec3 position, float radius, int mas
 	newRb.inverseInertiaTensor = newRb.inverseInertiaTensor.inverse();
 
 	rigidBodies.push_back(newRb);
+	return rigidBodies.size() - 1;
 	
 }
 
@@ -337,10 +369,19 @@ float RigidBodySystemSimulator::getMass(int i)
 	return rigidBodies[i].mass;
 }
 
+void RigidBodySystemSimulator::applyGravityToAll() {
+	
+	for (int i = 0; i < this->getNumberOfRigidBodies(); ++i) {
+		applyForceOnBody(i, rigidBodies[i].center, rigidBodies[i].mass * f_gravityAcc);
+	}
+}
+
 void RigidBodySystemSimulator::implementEuler(int i, float timeStep)
 {
 	rigidBodies[i].center += timeStep * rigidBodies[i].lineerVelocity;
 	rigidBodies[i].lineerVelocity += timeStep * rigidBodies[i].totalForce / rigidBodies[i].mass;
+
+	applyGravityToAll();
 }
 
 void RigidBodySystemSimulator::updateOrientation(int i, float timestep)
@@ -436,10 +477,10 @@ void RigidBodySystemSimulator::setProjectDemo()
 	std::cout << "Project Demo!\n";
 	rigidBodies.clear();
 
-	addRigidBody(Vec3(-1, 0, 0), 0.1, 2.0);
+	addRigidBody(Vec3(-0.6, 0, 0), 0.2, 2.0);
 	setVelocityOf(0, Vec3(0.3, 0, 0));
 
-	addRigidBody(Vec3(1, 0, 0), 0.1, 2.0);
+	addRigidBody(Vec3(0.6, 0, 0), 0.2, 2.0);
 	
 }
 
