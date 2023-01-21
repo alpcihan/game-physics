@@ -62,7 +62,7 @@ public:
 private:
 	// Attributes
 	// add your RigidBodySystem data members, for e.g.,
-	vector<rigidBody> rigidBodies;
+	vector<rigidBody> rigidBodies; //TODO: RigidBodies can be given from outside of the simulator and functions can get the rigid bodies as input
 	Vec3 m_externalForce;
 
 	// UI Attributes

@@ -5,17 +5,17 @@ using namespace std;
 Grid::Grid(uint32_t w = 16, uint32_t h = 16)
 	: m_w(w), m_h(h)
 {
-	SpherePoint initVals;
+	PointInfo initVals;
 	initVals.isActive = true;
 	initVals.temp = 0;
 
-	m_temps = std::vector<SpherePoint>(w * h, initVals);
-	m_T = std::vector<SpherePoint>(w * h, initVals);
+	m_temps = std::vector<PointInfo>(w * h, initVals);
+	m_T = std::vector<PointInfo>(w * h, initVals);
 }
 
 void Grid::applyUpdates()
 {
-	std::vector<SpherePoint> _T = std::move(m_temps);
+	std::vector<PointInfo> _T = std::move(m_temps);
 	m_temps = std::move(m_T);
 	m_T = std::move(_T);
 }

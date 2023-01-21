@@ -8,7 +8,7 @@
 class Grid
 {
 public:
-	struct SpherePoint {
+	struct PointInfo {
 		bool isActive;
 		Real temp;
 	};
@@ -20,17 +20,17 @@ public:
 	uint32_t h() const { return m_h; }
 
 	void set(uint32_t w, uint32_t h, Real value) { m_T[m_w * h + w].temp = value; }
-	const std::vector<SpherePoint> &get() const { return m_temps; }
+	const std::vector<PointInfo> &get() const { return m_temps; }
 	Real get(uint32_t w, uint32_t h) const { return m_temps[m_w * h + w].temp; }
 	Real get(uint32_t i) const { return m_temps[i].temp; }
 	bool getPointStatus(uint32_t w, uint32_t h) const { return m_temps[m_w * h + w].isActive; }
-	void setPointStatus(uint32_t w, uint32_t h, bool status) { m_temps[m_w * h + w].isActive = status; }
+	void setPointStatus(uint32_t w, uint32_t h, bool status) { m_temps[m_w * h + w].isActive = status; m_T[m_w * h + w].isActive = status;}
 
 	void applyUpdates();
 
 private:
-	std::vector<SpherePoint> m_temps;
-	std::vector<SpherePoint> m_T;
+	std::vector<PointInfo> m_temps;
+	std::vector<PointInfo> m_T;
 	uint32_t m_w, m_h;
 };
 
@@ -64,10 +64,13 @@ private:
 	Point2D m_mouse;
 	Point2D m_trackmouse;
 	Point2D m_oldtrackmouse;
-	Grid *T; // save results of every time step
+	
 	float m_alpha = 1;
 	int m_nx = 16;
 	int m_ny = 16;
+
+public: 
+	Grid* T; // save results of every time step
 };
 
 void fillT(Grid *T);
