@@ -6,12 +6,6 @@
 
 #define TESTCASEUSEDTORUNTEST 2
 
-struct SphericalCollisionInfo {
-	bool isValid;
-	//Vec3 collisionPointWorld;
-	Vec3 normalWorld;
-	//float depth;
-};
 
 class RigidBodySystemSimulator:public Simulator{
 public:
@@ -36,7 +30,7 @@ public:
 	Vec3 getAngularVelocityOfRigidBody(int i);
 	void applyForceOnBody(int i, Vec3 loc, Vec3 force);
 	//void addRigidBody(Vec3 position, Vec3 size, int mass);
-	void addRigidBody(Vec3 position, float radius, int mass);
+	size_t addRigidBody(Vec3 position, float radius, int mass);
 	void setOrientationOf(int i,Quat orientation);
 	void setVelocityOf(int i, Vec3 velocity);
 	Vec3 getTotalForce(int i);

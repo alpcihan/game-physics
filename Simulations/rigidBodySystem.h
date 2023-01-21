@@ -20,6 +20,12 @@
 //	bool isStatic = false;
 //};
 
+struct SphericalCollisionInfo {
+	bool isValid;
+	Vec3 rb1VelocityChange, rb2VelocityChange;
+};
+
+
 struct rigidBody {
 public:
 	//	rigidBody()=default;
