@@ -25,10 +25,9 @@ public:
 	void reset();
 	void drawFrame(ID3D11DeviceContext* pd3dImmediateContext);
 	void notifyCaseChanged(int testCase);
-	void externalForcesCalculations(float timeElapsed);
 	void simulateTimestep(float timeStep);
-	void onClick(int x, int y);
-	void onMouse(int x, int y);
+	void onClick(int x, int y);//@TODO: Add Erkin's code
+	void onMouse(int x, int y);//@TODO: Add Erkin's code
 	
 protected:
 	//// Attributes
@@ -47,7 +46,9 @@ protected:
 	
 	//int   m_iAccelerator; // switch between NAIVEACC and GRIDACC, (optionally, KDTREEACC, 2)
 	
-	SphereSystem * m_pTarget;
+	vector<rigidBody> m_Target;
+	vector<rigidBody> m_bullets;
+
 	RigidBodySystemSimulator* m_pRigidBodySimulator;
 	DiffusionSimulator* m_pDiffusionSimulator;
 	// add your own sphere system member

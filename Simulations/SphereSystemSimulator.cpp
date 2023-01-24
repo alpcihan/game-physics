@@ -14,16 +14,36 @@ SphereSystemSimulator::SphereSystemSimulator()
 {
 	m_pDiffusionSimulator = new DiffusionSimulator();
 	m_pRigidBodySimulator = new RigidBodySystemSimulator();
-	m_pTarget = new SphereSystem((*m_pDiffusionSimulator), (*m_pRigidBodySimulator), m_pDiffusionSimulator->T->w(), m_pDiffusionSimulator->T->h());
+}
+
+void SphereSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
+{
+	m_pRigidBodySimulator->initUI(DUC);
+	m_pDiffusionSimulator->initUI(DUC);
+}
+
+void SphereSystemSimulator::reset()
+{
+	m_Target.clear();
+	m_bullets.clear();
+
+	m_pRigidBodySimulator->reset();
+	m_pDiffusionSimulator->reset();
+
 }
 
 void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
-	//SphereSystem->drawSpheres();
-}
 
-void SphereSystemSimulator::externalForcesCalculations(float timeElapsed)
-{
+	for (uint32_t i = 0; i < m_Target.size(); ++i) {
+		DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
+		DUC->drawSphere(m_Target[i].center, m_Target[i].radius);
+	}
+	for (uint32_t i = 0; i < m_bullets.size(); ++i) {
+		DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
+		DUC->drawSphere(m_bullets[i].center, m_bullets[i].radius);
+	}
+	
 }
 
 void SphereSystemSimulator::simulateTimestep(float timeStep)

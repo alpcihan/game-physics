@@ -55,6 +55,7 @@ public:
 	void drawObjects();
 	Grid *diffuseTemperatureExplicit(Real dTime);
 	void diffuseTemperatureImplicit(Real dTime);
+	Grid getGrid() { return (*T); }
 
 private:
 	// Attributes
@@ -68,9 +69,7 @@ private:
 	float m_alpha = 1;
 	int m_nx = 16;
 	int m_ny = 16;
-
-public: 
-	Grid* T; // save results of every time step
+	Grid* T; // save results of every timestep
 };
 
 void fillT(Grid *T);
