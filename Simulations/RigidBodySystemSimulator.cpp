@@ -55,8 +55,8 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateConte
 {
 	rigidBody rb;
 	for ( int i=0; i < this->getNumberOfRigidBodies(); ++i) {
-		//Mat4 transform=getObject2WorldSpaceMatrix(rigidBodies[i]);
-		rb = rigidBodies[i];
+		//Mat4 transform=getObject2WorldSpaceMatrix(temp_RigidBodies[i]);
+		rb = temp_RigidBodies[i];
 		DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
 		//DUC->drawRigidBody(transform);
 		
@@ -120,12 +120,12 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 		Vec3 dir = norm(inputWorldScaled);
 		
 		for (int i = 0; i < this->getNumberOfRigidBodies(); ++i) {
-			if (rigidBodies[i].isStatic) continue;
+			if (temp_RigidBodies[i].isStatic) continue;
 
-			rigidBodies[i].totalForce += inputWorldScaled;
+			temp_RigidBodies[i].totalForce += inputWorldScaled;
 
-			Vec3 pos = norm(inputWorld - rigidBodies[i].center) + rigidBodies[i].center;
-			rigidBodies[i].torq += cross(pos, dir*0.01);
+			Vec3 pos = norm(inputWorld - temp_RigidBodies[i].center) + temp_RigidBodies[i].center;
+			temp_RigidBodies[i].torq += cross(pos, dir*0.01);
 		}
 	}
 }
@@ -167,106 +167,89 @@ SphericalCollisionInfo RigidBodySystemSimulator::checkSphericalCollision(rigidBo
 	return info;
 }
 
+
 void RigidBodySystemSimulator::applyForceOfCollusions(float timestep) {
-	const int rbCount = rigidBodies.size();
+	// Collusion calculation of entities
 
-	if (rbCount <= 1)
-	{
-		return;
-	}
+	for (uint32_t i = 0; i < rigidBodies.size(); ++i) {						// i represents the first entity to check collusion
+		vector<rigidBody>& first_entity = rigidBodies[i];
 
-	for (int i=0; i < rbCount-1; i++) {
-		for (int j=i+1; j<rbCount; j++) {
-			//CollisionInfo info = checkCollisionSAT(getObject2WorldSpaceMatrix(rigidBodies[i]), getObject2WorldSpaceMatrix(rigidBodies[j]));
-			//if (info.isValid) {
-			//	rigidBody& a = rigidBodies[i];
-			//	rigidBody& b = rigidBodies[j];
-			//	const Vec3 n = info.normalWorld;
-			//	const float d = info.depth;
+		// External collusion calculations of first_entity
+		for (uint32_t j = i + 1; j < rigidBodies.size(); ++j) {				//j represents the second entity to check collusion
+			vector<rigidBody>& second_entity = rigidBodies[j];
 
-			//	Vec3 xA = info.collisionPointWorld - a.center;
-			//	Vec3 xB = info.collisionPointWorld - b.center;
+			for (uint32_t k = 0; k < rigidBodies[i].size(); ++k) {			//k represents the rigid body elements of the first entity
+				for (uint32_t l = 0; l < rigidBodies[j].size(); ++l) {		//l represents the rigid body elements of the second entity
+					SphericalCollisionInfo info = checkSphericalCollision(first_entity[k], second_entity[l]);
 
-			//	Vec3 vA = a.lineerVelocity + cross(a.angularVelocity, xA);
-			//	Vec3 vB = b.lineerVelocity + cross(b.angularVelocity, xB);
-			//	Vec3 vRel = vA - vB;
+					if (info.isValid) {
+						first_entity[k].lineerVelocity += info.rb1VelocityChange;
+						second_entity[l].lineerVelocity += info.rb2VelocityChange;
+					}
+				}
 
-			//	float c = 0.01f;
-			//	auto dotRelNormal = dot(vRel, n);
-
-			//	float inverseMassSum = (1.0 / a.mass) + (1.0 / b.mass);
-
-			//	Mat4 invA = a.inverseInertiaTensor;
-			//	Mat4 invB = b.inverseInertiaTensor;
-
-			//	auto ixnxA = cross(invA*(cross(xA, n)), xA);
-			//	auto ixnxB = cross(invB*(cross(xB, n)), xB);
-
-			//	auto JNumerator = -(1. + c) * dotRelNormal;
-			//	auto JDenominator = inverseMassSum + dot((ixnxA + ixnxB), n);
-
-			//	auto J = JNumerator / JDenominator;
-			//	auto Jn = J * n;
-
-			//	// update position
-			//	if (!a.isStatic)
-			//	{
-			//		a.center += (n * d) * 0.5;
-			//		a.lineerVelocity += Jn / a.mass;
-			//		a.angularMomentum += cross(xA, Jn);
-			//	}
-
-			//	if (!b.isStatic)
-			//	{
-			//		b.center -= (n * d) * 0.5;
-			//		b.lineerVelocity -= Jn / b.mass;
-			//		b.angularMomentum -= cross(xA, Jn);
-			//	}
-			//}
-
-			SphericalCollisionInfo info = checkSphericalCollision(rigidBodies[i], rigidBodies[j]);
-
-			if (info.isValid) {
-				rigidBodies[i].lineerVelocity += info.rb1VelocityChange;
-				rigidBodies[j].lineerVelocity += info.rb2VelocityChange;
 			}
 		}
+		
+
+		// Internal collusion calculation of first_entity
+		for (uint32_t internal_i = 0; internal_i < rigidBodies[i].size(); ++internal_i) {
+			for (uint32_t internal_j = internal_i + 1; internal_j < rigidBodies[i].size(); ++internal_j) {
+
+				SphericalCollisionInfo info = checkSphericalCollision(first_entity[internal_i], first_entity[internal_j]);
+
+				if (info.isValid) {
+					first_entity[internal_i].lineerVelocity += info.rb1VelocityChange;
+					first_entity[internal_j].lineerVelocity += info.rb2VelocityChange;
+				}
+
+			}
+
+		}
 	}
+
 }
 
 void RigidBodySystemSimulator::simulateTimestep(float timestep)
 {	
-	for ( int i = 0; i < this->getNumberOfRigidBodies(); ++i) {
-		implementEuler(i, timestep);
-		updateOrientation(i, timestep);
-		updateAngularVelocity(i, timestep);
 
-		rigidBodies[i].totalForce = 0;
-		rigidBodies[i].torq = 0;
+	for (uint32_t j = 0; j < rigidBodies.size(); ++j) {
+		temp_RigidBodies = rigidBodies[j];
+
+		for (int i = 0; i < rigidBodies[j].size(); ++i) {
+			implementEuler(i, timestep);
+			updateOrientation(i, timestep);
+			updateAngularVelocity(i, timestep);
+
+			temp_RigidBodies[i].totalForce = 0;
+			temp_RigidBodies[i].torq = 0;
+		}
+
+
 	}
-
+	
 	applyForceOfCollusions(timestep);
 }
 
-void RigidBodySystemSimulator::onClick(int x, int y)
-{
-	m_trackmouse.x = x;
-	m_trackmouse.y = y;
-
-	Vec3 cameraPos = Vec3(DUC->g_camera.GetEyePt());
-
-
-	Vec3 cameraFrontVec = - cameraPos / sqrt(cameraPos.squaredDistanceTo(Vec3(0.0)));
-	Vec3 bulletPosition = cameraPos + 0.7 * cameraFrontVec;
-	Vec3 bulletVelocity = 7 * cameraFrontVec;
-	
-	//std::cout << Vec3() << std::endl;
-	
-
-	int bulletIdx = addRigidBody(bulletPosition, 0.07, 2.0);
-	std::cout << bulletIdx;
-	setVelocityOf(bulletIdx, bulletVelocity);
-}
+//void RigidBodySystemSimulator::onClick(int x, int y)
+//{
+//	m_trackmouse.x = x;
+//	m_trackmouse.y = y;
+//
+//	Vec3 cameraPos = Vec3(DUC->g_camera.GetEyePt());
+//
+//
+//	Vec3 cameraFrontVec = - cameraPos / sqrt(cameraPos.squaredDistanceTo(Vec3(0.0)));
+//	Vec3 bulletPosition = cameraPos + 0.7 * cameraFrontVec;
+//	Vec3 bulletVelocity = 7 * cameraFrontVec;
+//	
+//	//std::cout << Vec3() << std::endl;
+//	
+//
+//	int bulletIdx = addRigidBody(bulletPosition, 0.07, 2.0);
+//	std::cout << bulletIdx;
+//	setVelocityOf(bulletIdx, bulletVelocity);
+//}
 
 void RigidBodySystemSimulator::onMouse(int x, int y)
 {
@@ -283,23 +266,23 @@ int RigidBodySystemSimulator::getNumberOfRigidBodies()
 
 Vec3 RigidBodySystemSimulator::getPositionOfRigidBody(int i)
 {
-	return rigidBodies[i].center;
+	return temp_RigidBodies[i].center;
 }
 
 Vec3 RigidBodySystemSimulator::getLinearVelocityOfRigidBody(int i)
 {
-	return rigidBodies[i].lineerVelocity;
+	return temp_RigidBodies[i].lineerVelocity;
 }
 
 Vec3 RigidBodySystemSimulator::getAngularVelocityOfRigidBody(int i)
 {
-	return rigidBodies[i].angularVelocity;
+	return temp_RigidBodies[i].angularVelocity;
 }
 
 void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
 {
-	rigidBodies[i].totalForce += force;
-	rigidBodies[i].torq += cross(loc- rigidBodies[i].center, force);
+	temp_RigidBodies[i].totalForce += force;
+	temp_RigidBodies[i].torq += cross(loc- temp_RigidBodies[i].center, force);
 }
 
 //void RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass)
@@ -344,58 +327,63 @@ size_t RigidBodySystemSimulator::addRigidBody(Vec3 position, float radius, int m
 	newRb.inverseInertiaTensor.initScaling(sphericalInertiaVals.x, sphericalInertiaVals.y, sphericalInertiaVals.z); //set inertia tensor values //!!!!!!!!!!!possible error!!!!!!!!!!!!!!!!!!
 	newRb.inverseInertiaTensor = newRb.inverseInertiaTensor.inverse();
 
-	rigidBodies.push_back(newRb);
+	//rigidBodies.push_back(newRb); //the rigid bodies are addded in the spheresystemsimulator
 	return rigidBodies.size() - 1;
 	
 }
 
 void RigidBodySystemSimulator::setOrientationOf(int i, Quat orientation)
 {
-	rigidBodies[i].orientation = orientation;
+	temp_RigidBodies[i].orientation = orientation;
 }
 
 void RigidBodySystemSimulator::setVelocityOf(int i, Vec3 velocity)
 {
-	rigidBodies[i].lineerVelocity = velocity;
+	temp_RigidBodies[i].lineerVelocity = velocity;
 }
 
 Vec3 RigidBodySystemSimulator::getTotalForce(int i)
 {
-	return rigidBodies[i].totalForce;
+	return temp_RigidBodies[i].totalForce;
 }
 
 float RigidBodySystemSimulator::getMass(int i)
 {
-	return rigidBodies[i].mass;
+	return temp_RigidBodies[i].mass;
 }
 
 void RigidBodySystemSimulator::applyGravityToAll() {
 	
 	for (int i = 0; i < this->getNumberOfRigidBodies(); ++i) {
-		applyForceOnBody(i, rigidBodies[i].center, rigidBodies[i].mass * f_gravityAcc);
+		applyForceOnBody(i, temp_RigidBodies[i].center, temp_RigidBodies[i].mass * f_gravityAcc);
 	}
+}
+
+void RigidBodySystemSimulator::addEntities(vector<rigidBody>& Entity)
+{
+	rigidBodies.push_back(Entity);
 }
 
 void RigidBodySystemSimulator::implementEuler(int i, float timeStep)
 {
-	rigidBodies[i].center += timeStep * rigidBodies[i].lineerVelocity;
-	rigidBodies[i].lineerVelocity += timeStep * rigidBodies[i].totalForce / rigidBodies[i].mass;
+	temp_RigidBodies[i].center += timeStep * temp_RigidBodies[i].lineerVelocity;
+	temp_RigidBodies[i].lineerVelocity += timeStep * temp_RigidBodies[i].totalForce / temp_RigidBodies[i].mass;
 
 	applyGravityToAll();
 }
 
 void RigidBodySystemSimulator::updateOrientation(int i, float timestep)
 {
-	auto w = rigidBodies[i].angularVelocity;
+	auto w = temp_RigidBodies[i].angularVelocity;
 	Quat w_q = Quat(w.x, w.y, w.z, 0);
 	
-	rigidBodies[i].orientation += (timestep / 2) * rigidBodies[i].orientation * w_q;
-	rigidBodies[i].orientation = rigidBodies[i].orientation.unit();
+	temp_RigidBodies[i].orientation += (timestep / 2) * temp_RigidBodies[i].orientation * w_q;
+	temp_RigidBodies[i].orientation = temp_RigidBodies[i].orientation.unit();
 }
 
 void RigidBodySystemSimulator::updateAngularVelocity(int i,float timestep)
 {
-	rigidBody& object = rigidBodies[i];
+	rigidBody& object = temp_RigidBodies[i];
 
 	// update angular momentum
 	object.angularMomentum += timestep * object.torq;
@@ -407,12 +395,12 @@ void RigidBodySystemSimulator::updateAngularVelocity(int i,float timestep)
 	Mat4 currentInverseInertia = rotation * object.inverseInertiaTensor * rotation_t;
 
 	// update angular velocity
-	rigidBodies[i].angularVelocity = currentInverseInertia * object.angularMomentum;
+	temp_RigidBodies[i].angularVelocity = currentInverseInertia * object.angularMomentum;
 }
 
 Vec3 RigidBodySystemSimulator::getWorldSpaceVelocity(int i,Vec3 loc)
 {
-	return rigidBodies[i].lineerVelocity + cross(rigidBodies[i].angularVelocity, loc - rigidBodies[i].center);
+	return temp_RigidBodies[i].lineerVelocity + cross(temp_RigidBodies[i].angularVelocity, loc - temp_RigidBodies[i].center);
 }
 
 //void RigidBodySystemSimulator::setDemo1()
