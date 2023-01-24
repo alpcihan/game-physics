@@ -36,6 +36,7 @@ public:
 	Vec3 getTotalForce(int i);
 	float getMass(int i);
 	void applyGravityToAll();
+	void addEntities(vector<rigidBody>& Entity);
 
 	void implementEuler(int i, float timeStep);
 	void updateOrientation(int i, float timestep);
@@ -57,7 +58,8 @@ public:
 private:
 	// Attributes
 	// add your RigidBodySystem data members, for e.g.,
-	vector<rigidBody> rigidBodies; //TODO: RigidBodies can be given from outside of the simulator and functions can get the rigid bodies as input
+	vector<vector<rigidBody>&>& rigidBodies; //TODO: RigidBodies can be given from outside of the simulator and functions can get the rigid bodies as input
+	vector<rigidBody>& temp_RigidBodies;
 	Vec3 m_externalForce;
 
 	// UI Attributes
