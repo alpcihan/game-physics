@@ -235,7 +235,6 @@
     <ClInclude Include="collisionDetect.h" />
     <ClInclude Include="DiffusionSimulator.h" />
     <ClInclude Include="DrawingUtilitiesClass.h" />
-    <ClInclude Include="MassSpringSystemSimulator.h" />
     <ClInclude Include="pcgsolver.h" />
     <ClInclude Include="rigidBodySystem.h" />
     <ClInclude Include="RigidBodySystemSimulator.h" />

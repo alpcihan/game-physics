@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2017
-VisualStudioVersion = 12.0.30501.0
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Effects11", "Effects11\Effects11_2017.vcxproj", "{DF460EAB-570D-4B50-9089-2E2FC801BF38}"
 EndProject
@@ -164,7 +164,6 @@ Global
 		{E0B52AE7-E160-4D32-BF3F-910B785E5A8E}.Release|x86.ActiveCfg = Release|Win32
 		{E0B52AE7-E160-4D32-BF3F-910B785E5A8E}.Release|x86.Build.0 = Release|Win32
 		{13342092-1CC5-4994-A03C-3963197E8016}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
-		{13342092-1CC5-4994-A03C-3963197E8016}.Debug|Mixed Platforms.Build.0 = Debug|Win32
 		{13342092-1CC5-4994-A03C-3963197E8016}.Debug|Win32.ActiveCfg = Debug|Win32
 		{13342092-1CC5-4994-A03C-3963197E8016}.Debug|Win32.Build.0 = Debug|Win32
 		{13342092-1CC5-4994-A03C-3963197E8016}.Debug|x64.ActiveCfg = Debug|x64
@@ -182,5 +181,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B4FEEBB2-C52C-4C97-8013-CCA73095B838}
 	EndGlobalSection
 EndGlobal

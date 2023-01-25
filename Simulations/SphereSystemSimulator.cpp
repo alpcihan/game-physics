@@ -16,18 +16,37 @@ SphereSystemSimulator::SphereSystemSimulator()
 	m_pRigidBodySimulator = new RigidBodySystemSimulator();
 
 	m_pRigidBodySimulator->setUpdateCallback(std::bind(&SphereSystemSimulator::updateEntities, this, std::placeholders::_1));
+	setScene();
 
-	Entity bulletsEntity;
-	m_rigidBodies.push_back(bulletsEntity);
+	/*Entity bulletsEntity;
+	m_rigidBodies.push_back(bulletsEntity);*/
+}
+
+const char* SphereSystemSimulator::getTestCasesStr()
+{
+	return nullptr;
+}
+
+void SphereSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
+{
+	this->DUC = DUC;
+}
+
+void SphereSystemSimulator::reset()
+{
+	m_pRigidBodySimulator->reset();
+	//TODO: write here 
 }
 
 void SphereSystemSimulator::addTarget(uint32_t n_x, uint32_t n_y)
 {
 	Entity targetEntity;
-
+	float scale = 0.1f;
 	for (uint32_t i = 0; i < n_x; ++i) {
 		for (uint32_t j = 0; j < n_y; ++j) {
-			targetEntity.addRigidBody(Vec3(0.0), 0.1, 2);
+
+			float x = (i - n_x * 0.5) * scale, y = (j- n_y* 0.5) * scale;
+			targetEntity.addRigidBody(Vec3(x,y,0.0), 0.1, 2);
 		}
 	}
 
@@ -52,29 +71,31 @@ void SphereSystemSimulator::addBullet()
 
 void SphereSystemSimulator::setScene()
 {
+
+	addTarget(12, 12);
 	for (auto entity : m_rigidBodies) {
 
 		m_pRigidBodySimulator->addEntities(entity.getRigidBody());
 	}
 }
 
-void SphereSystemSimulator::updateEntities(const std::vector<vector<rigidBody>>& updatedEntities)
+void SphereSystemSimulator::updateEntities(vector<vector<rigidBody>> updatedEntities)
 {
-	for (uint32_t i = 0; i < m_rigidBodies.size();++i) {
+	for (uint32_t i = 0; i < updatedEntities.size();++i) {
 		m_rigidBodies[i].updateRigidBodies(updatedEntities[i]);
 	}
 }
 
 void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
-	rigidBody rb;
+	
 
 	for (uint32_t i = 0; i < m_rigidBodies.size(); ++i) {
 
 		vector<rigidBody> temp_RigidBodies = m_rigidBodies[i].getRigidBody();	// Rigidbodies of the entity i
 
 		for (uint32_t j = 0; j < temp_RigidBodies.size(); ++j) {
-			rb = temp_RigidBodies[j];
+			rigidBody& rb=temp_RigidBodies[j];
 			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
 
 			DUC->drawSphere(rb.center, Vec3(rb.radius));
@@ -93,6 +114,10 @@ void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 	//}
 }
 
+void SphereSystemSimulator::notifyCaseChanged(int testCase)
+{
+}
+
 void SphereSystemSimulator::externalForcesCalculations(float timeElapsed)
 {
 }
@@ -103,4 +128,12 @@ void SphereSystemSimulator::simulateTimestep(float timeStep)
 	//check the heat values and set the point validity
 	m_pRigidBodySimulator->simulateTimestep(timeStep);
 
+}
+
+void SphereSystemSimulator::onClick(int x, int y)
+{
+}
+
+void SphereSystemSimulator::onMouse(int x, int y)
+{
 }

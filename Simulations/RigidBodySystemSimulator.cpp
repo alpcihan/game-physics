@@ -232,6 +232,10 @@ void RigidBodySystemSimulator::simulateTimestep(float timestep)
 	applyForceOfCollusions(timestep);
 }
 
+void RigidBodySystemSimulator::onClick(int x, int y)
+{
+}
+
 //void RigidBodySystemSimulator::onClick(int x, int y)
 //{
 //	m_trackmouse.x = x;

@@ -14,8 +14,8 @@
 class Entity{
 public:
 
-	Entity();
-	~Entity();
+	Entity(){}
+	~Entity(){}
 
 	void addRigidBody(Vec3 position, float radius, int mass, Vec3 initialVelocity=Vec3(0.0)) {
 
@@ -41,7 +41,7 @@ public:
 		m_rigidBodies.push_back(newRb);
 
 	}
-	vector<rigidBody>& getRigidBody() {
+	vector<rigidBody> getRigidBody() {
 		return m_rigidBodies;
 	}
 
@@ -76,7 +76,7 @@ public:
 	void addBullet();
 	void setScene();
 
-	void updateEntities(const std::vector<vector<rigidBody>>& updatedEntities);
+	void updateEntities(vector<vector<rigidBody>> updatedEntities);
 	void drawFrame(ID3D11DeviceContext* pd3dImmediateContext);
 	void notifyCaseChanged(int testCase);
 	void externalForcesCalculations(float timeElapsed);
