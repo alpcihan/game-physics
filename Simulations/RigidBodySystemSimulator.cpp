@@ -4,7 +4,6 @@
 RigidBodySystemSimulator::RigidBodySystemSimulator()
 {
 	this->m_iTestCase = 0;
-	
 }
 
 
@@ -218,18 +217,19 @@ void RigidBodySystemSimulator::simulateTimestep(float timestep)
 
 		for (int i = 0; i < rigidBodies[j].size(); ++i) {
 			implementEuler(i, timestep);
+			//applyGravityToAll();
 			updateOrientation(i, timestep);
 			updateAngularVelocity(i, timestep);
 
 			temp_RigidBodies[i].totalForce = 0;
 			temp_RigidBodies[i].torq = 0;
 		}
-		
+		rigidBodies[j] = temp_RigidBodies;
 	}
+	applyForceOfCollusions(timestep);
 	if (m_updateCallback) {
 		m_updateCallback(rigidBodies);
 	}
-	applyForceOfCollusions(timestep);
 }
 
 void RigidBodySystemSimulator::onClick(int x, int y)
@@ -266,7 +266,7 @@ void RigidBodySystemSimulator::onMouse(int x, int y)
 
 int RigidBodySystemSimulator::getNumberOfRigidBodies()
 {
-	return rigidBodies.size();
+	return temp_RigidBodies.size();
 }
 
 Vec3 RigidBodySystemSimulator::getPositionOfRigidBody(int i)
@@ -373,8 +373,6 @@ void RigidBodySystemSimulator::implementEuler(int i, float timeStep)
 {
 	temp_RigidBodies[i].center += timeStep * temp_RigidBodies[i].lineerVelocity;
 	temp_RigidBodies[i].lineerVelocity += timeStep * temp_RigidBodies[i].totalForce / temp_RigidBodies[i].mass;
-
-	applyGravityToAll();
 }
 
 void RigidBodySystemSimulator::updateOrientation(int i, float timestep)

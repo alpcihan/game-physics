@@ -106,7 +106,7 @@ protected:
 	RigidBodySystemSimulator* m_pRigidBodySimulator;
 	DiffusionSimulator* m_pDiffusionSimulator;
 
-	const uint16_t bulletsEntityIdx = 0;
+	uint32_t bulletsEntityIdx;
 	// add your own sphere system member
 	// for Demo 3 only:
 	// you will need multiple SphereSystem objects to do comparisons in Demo 3
