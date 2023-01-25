@@ -45,6 +45,12 @@ public:
 		return m_rigidBodies;
 	}
 
+	void updateRigidBodies(const vector<rigidBody>& rigidbodies) {
+
+		m_rigidBodies = rigidbodies;
+
+	}
+
 private:
 
 	vector<rigidBody> m_rigidBodies;
@@ -66,11 +72,11 @@ public:
 	void initUI(DrawingUtilitiesClass * DUC);
 	void reset();
 
-
 	void addTarget(uint32_t n_x, uint32_t n_y);
 	void addBullet();
 	void setScene();
 
+	void updateEntities(const std::vector<vector<rigidBody>>& updatedEntities);
 	void drawFrame(ID3D11DeviceContext* pd3dImmediateContext);
 	void notifyCaseChanged(int testCase);
 	void externalForcesCalculations(float timeElapsed);

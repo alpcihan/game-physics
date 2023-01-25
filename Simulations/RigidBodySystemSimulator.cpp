@@ -224,10 +224,11 @@ void RigidBodySystemSimulator::simulateTimestep(float timestep)
 			temp_RigidBodies[i].totalForce = 0;
 			temp_RigidBodies[i].torq = 0;
 		}
-
-
+		
 	}
-	
+	if (m_updateCallback) {
+		m_updateCallback(rigidBodies);
+	}
 	applyForceOfCollusions(timestep);
 }
 

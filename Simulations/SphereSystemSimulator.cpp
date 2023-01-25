@@ -15,12 +15,11 @@ SphereSystemSimulator::SphereSystemSimulator()
 	m_pDiffusionSimulator = new DiffusionSimulator();
 	m_pRigidBodySimulator = new RigidBodySystemSimulator();
 
+	m_pRigidBodySimulator->setUpdateCallback(std::bind(&SphereSystemSimulator::updateEntities, this, std::placeholders::_1));
+
 	Entity bulletsEntity;
 	m_rigidBodies.push_back(bulletsEntity);
 }
-
-
-
 
 void SphereSystemSimulator::addTarget(uint32_t n_x, uint32_t n_y)
 {
@@ -56,6 +55,13 @@ void SphereSystemSimulator::setScene()
 	for (auto entity : m_rigidBodies) {
 
 		m_pRigidBodySimulator->addEntities(entity.getRigidBody());
+	}
+}
+
+void SphereSystemSimulator::updateEntities(const std::vector<vector<rigidBody>>& updatedEntities)
+{
+	for (uint32_t i = 0; i < m_rigidBodies.size();++i) {
+		m_rigidBodies[i].updateRigidBodies(updatedEntities[i]);
 	}
 }
 

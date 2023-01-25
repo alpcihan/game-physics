@@ -36,7 +36,7 @@ public:
 	Vec3 getTotalForce(int i);
 	float getMass(int i);
 	void applyGravityToAll();
-	void addEntities(vector<rigidBody>& Entity);
+	void addEntities(vector<rigidBody>& entities);
 
 	void implementEuler(int i, float timeStep);
 	void updateOrientation(int i, float timestep);
@@ -53,13 +53,14 @@ public:
 	void setDemo4();*/
 	void setProjectDemo();
 
-	
+	using UpdateCallback = std::function<void(const std::vector<vector<rigidBody>>&)>;
+	void setUpdateCallback(UpdateCallback callback) { m_updateCallback = callback; }
 
 private:
 	// Attributes
 	// add your RigidBodySystem data members, for e.g.,
-	vector<vector<rigidBody>&>& rigidBodies; //TODO: RigidBodies can be given from outside of the simulator and functions can get the rigid bodies as input
-	vector<rigidBody>& temp_RigidBodies;
+	vector<vector<rigidBody>> rigidBodies; //TODO: RigidBodies can be given from outside of the simulator and functions can get the rigid bodies as input
+	vector<rigidBody> temp_RigidBodies;
 	Vec3 m_externalForce;
 
 	// UI Attributes
@@ -68,5 +69,7 @@ private:
 	Point2D m_oldtrackmouse;
 
 	Vec3 f_gravityAcc = Vec3(0, -0.2, 0);
+
+	UpdateCallback m_updateCallback;
 	};
 #endif
