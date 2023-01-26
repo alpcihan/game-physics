@@ -12,14 +12,12 @@
 
 SphereSystemSimulator::SphereSystemSimulator()
 {
+	this->m_iTestCase = 0;	
 	m_pDiffusionSimulator = new DiffusionSimulator();
 	m_pRigidBodySimulator = new RigidBodySystemSimulator();
 
 	m_pRigidBodySimulator->setUpdateCallback(std::bind(&SphereSystemSimulator::updateEntities, this, std::placeholders::_1));
-	setScene();
 
-	/*Entity bulletsEntity;
-	m_rigidBodies.push_back(bulletsEntity);*/
 }
 
 const char* SphereSystemSimulator::getTestCasesStr()
@@ -34,8 +32,20 @@ void SphereSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 
 void SphereSystemSimulator::reset()
 {
+	clearRigidBodies();
 	m_pRigidBodySimulator->reset();
 	//TODO: write here 
+}
+
+void SphereSystemSimulator::clearRigidBodies() {
+
+	// Clear the elements of the nested vectors
+	for (auto& v : m_rigidBodies)
+		v.clear();
+	// Clear the elements of the vector of vectors
+	m_rigidBodies.clear();
+	// release the memory occupied by the vector of vectors
+	m_rigidBodies.shrink_to_fit();
 }
 
 void SphereSystemSimulator::addTarget(uint32_t n_x, uint32_t n_y)
@@ -70,7 +80,7 @@ void SphereSystemSimulator::addBullet()
 
 void SphereSystemSimulator::setScene()
 {
-
+	reset();
 	addTarget(12, 12);
 	Entity bullet;//empty bullet entity
 	m_rigidBodies.push_back(bullet);
@@ -93,7 +103,6 @@ void SphereSystemSimulator::updateEntities(vector<vector<rigidBody>> updatedEnti
 void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
 	
-
 	for (uint32_t i = 0; i < m_rigidBodies.size(); ++i) {
 
 		vector<rigidBody> temp_RigidBodies = m_rigidBodies[i].getRigidBody();	// Rigidbodies of the entity i
@@ -120,6 +129,15 @@ void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 
 void SphereSystemSimulator::notifyCaseChanged(int testCase)
 {
+	switch (testCase) {
+	case 0:
+		std::cout << "Demo0\n";
+		setScene();
+		break;
+	
+	default:
+		break;
+	}
 }
 
 void SphereSystemSimulator::externalForcesCalculations(float timeElapsed)

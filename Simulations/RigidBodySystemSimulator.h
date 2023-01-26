@@ -37,6 +37,7 @@ public:
 	float getMass(int i);
 	void applyGravityToAll();
 	void addEntities(vector<rigidBody>& entities);
+	void clearRigidBodies();
 
 	void implementEuler(int i, float timeStep);
 	void updateOrientation(int i, float timestep);

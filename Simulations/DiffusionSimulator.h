@@ -39,6 +39,7 @@ class DiffusionSimulator : public Simulator
 public:
 	// Construtors
 	DiffusionSimulator();
+	DiffusionSimulator(uint32_t grid_w, uint32_t grid_h);
 	~DiffusionSimulator();
 
 	// Functions
@@ -55,7 +56,7 @@ public:
 	void drawObjects();
 	Grid *diffuseTemperatureExplicit(Real dTime);
 	void diffuseTemperatureImplicit(Real dTime);
-	Grid getGrid() { return (*T); }
+	Grid& getGrid() { return (*T); }
 
 private:
 	// Attributes

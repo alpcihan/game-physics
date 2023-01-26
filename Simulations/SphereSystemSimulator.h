@@ -17,6 +17,13 @@ public:
 	Entity(){}
 	~Entity(){}
 
+	void clear() {
+
+		m_rigidBodies.clear();
+		m_rigidBodies.shrink_to_fit();
+
+	}
+
 	void addRigidBody(Vec3 position, float radius, int mass, Vec3 initialVelocity=Vec3(0.0)) {
 
 		//m_rigidBodies.push_back(rigidBody);
@@ -60,7 +67,6 @@ private:
 /// <summary>
 /// 
 /// This Simulator is the parent simulator which conatins RigidBodySimulator and DiffusionSimulator
-/// It runs the simulator steps and shares the simulator informations with the SphereSystem via simulator refenrences.
 /// 
 /// </summary>
 class SphereSystemSimulator:public Simulator{
@@ -71,6 +77,7 @@ public:
 	const char * getTestCasesStr();
 	void initUI(DrawingUtilitiesClass * DUC);
 	void reset();
+	void clearRigidBodies();
 
 	void addTarget(uint32_t n_x, uint32_t n_y);
 	void addBullet();
@@ -85,21 +92,10 @@ public:
 	void onMouse(int x, int y);
 	
 protected:
-	//// Attributes
-	//Vec3 externalForce;
-	//Point2D m_mouse;
-	//Point2D m_trackmouse;
-	//Point2D m_oldtrackmouse;
-	//float m_fMass;
-	//float m_fRadius;
-	//float m_fForceScaling;
-	//float m_fDamping;
-	////int   m_iNumSpheres;
-	//
 	//int   m_iKernel; // index of the m_Kernels[5], more detials in SphereSystemSimulator.cpp
 	//static std::function<float(float)> m_Kernels[5];
 	
-	//int   m_iAccelerator; // switch between NAIVEACC and GRIDACC, (optionally, KDTREEACC, 2)
+	//int m_iAccelerator; // switch between NAIVEACC and GRIDACC, (optionally, KDTREEACC, 2)
 
 	vector<Entity> m_rigidBodies;
 	
@@ -107,7 +103,7 @@ protected:
 	DiffusionSimulator* m_pDiffusionSimulator;
 
 	uint32_t bulletsEntityIdx;
-	// add your own sphere system member
+
 	// for Demo 3 only:
 	// you will need multiple SphereSystem objects to do comparisons in Demo 3
 	// m_iAccelerator should be ignored.

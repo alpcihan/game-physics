@@ -34,9 +34,11 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 
 void RigidBodySystemSimulator::reset()
 {
+	clearRigidBodies();
 	m_mouse.x = m_mouse.y = 0;
 	m_trackmouse.x = m_trackmouse.y = 0;
 	m_oldtrackmouse.x = m_oldtrackmouse.y = 0;
+
 }
 
 Mat4 RigidBodySystemSimulator::getObject2WorldSpaceMatrix(const rigidBody& object) {
@@ -213,7 +215,7 @@ void RigidBodySystemSimulator::simulateTimestep(float timestep)
 {	
 
 	for (uint32_t j = 0; j < rigidBodies.size(); ++j) {
-		temp_RigidBodies = rigidBodies[j];
+		temp_RigidBodies=rigidBodies[j];
 
 		for (int i = 0; i < rigidBodies[j].size(); ++i) {
 			implementEuler(i, timestep);
@@ -224,7 +226,7 @@ void RigidBodySystemSimulator::simulateTimestep(float timestep)
 			temp_RigidBodies[i].totalForce = 0;
 			temp_RigidBodies[i].torq = 0;
 		}
-		rigidBodies[j] = temp_RigidBodies;
+		rigidBodies[j].swap(temp_RigidBodies);
 	}
 	applyForceOfCollusions(timestep);
 	if (m_updateCallback) {
@@ -367,6 +369,19 @@ void RigidBodySystemSimulator::applyGravityToAll() {
 void RigidBodySystemSimulator::addEntities(vector<rigidBody>& Entity)
 {
 	rigidBodies.push_back(Entity);
+}
+
+void RigidBodySystemSimulator::clearRigidBodies()
+{
+	// Clear the elements of the nested vectors
+	for (auto& v : rigidBodies) {
+		v.clear();
+		v.shrink_to_fit();
+	}
+	// Clear the elements of the vector of vectors
+	rigidBodies.clear();
+	// release the memory occupied by the vector of vectors
+	rigidBodies.shrink_to_fit();
 }
 
 void RigidBodySystemSimulator::implementEuler(int i, float timeStep)
