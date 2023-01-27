@@ -6,9 +6,6 @@ RigidBodySystemSimulator::RigidBodySystemSimulator()
 	this->m_iTestCase = 0;
 }
 
-
-
-
 const char* RigidBodySystemSimulator::getTestCasesStr()
 {
 	//return "Demo1,Demo2,Demo3,Demo4";
@@ -56,8 +53,8 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateConte
 {
 	rigidBody rb;
 	for ( int i=0; i < this->getNumberOfRigidBodies(); ++i) {
-		//Mat4 transform=getObject2WorldSpaceMatrix(temp_RigidBodies[i]);
-		rb = temp_RigidBodies[i];
+		//Mat4 transform=getObject2WorldSpaceMatrix(m_rigidBodies[i]);
+		rb = m_rigidBodies[i];
 		DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
 		//DUC->drawRigidBody(transform);
 		
@@ -121,12 +118,12 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 		Vec3 dir = norm(inputWorldScaled);
 		
 		for (int i = 0; i < this->getNumberOfRigidBodies(); ++i) {
-			if (temp_RigidBodies[i].isStatic) continue;
+			if (m_rigidBodies[i].isStatic) continue;
 
-			temp_RigidBodies[i].totalForce += inputWorldScaled;
+			m_rigidBodies[i].totalForce += inputWorldScaled;
 
-			Vec3 pos = norm(inputWorld - temp_RigidBodies[i].center) + temp_RigidBodies[i].center;
-			temp_RigidBodies[i].torq += cross(pos, dir*0.01);
+			Vec3 pos = norm(inputWorld - m_rigidBodies[i].center) + m_rigidBodies[i].center;
+			m_rigidBodies[i].torq += cross(pos, dir*0.01);
 		}
 	}
 }
@@ -170,67 +167,37 @@ SphericalCollisionInfo RigidBodySystemSimulator::checkSphericalCollision(rigidBo
 
 
 void RigidBodySystemSimulator::applyForceOfCollusions(float timestep) {
-	// Collusion calculation of entities
+	// Collusion calculation of rigid bodies
 
-	for (uint32_t i = 0; i < rigidBodies.size(); ++i) {						// i represents the first entity to check collusion
-		vector<rigidBody>& first_entity = rigidBodies[i];
+	for (size_t k = 0; k < m_rigidBodies.size(); ++k) {		
+		for (size_t l = k+1; l < m_rigidBodies.size()-1; ++l) {	
+			SphericalCollisionInfo info = checkSphericalCollision(m_rigidBodies[k], m_rigidBodies[l]);
 
-		// External collusion calculations of first_entity
-		for (uint32_t j = i + 1; j < rigidBodies.size(); ++j) {				//j represents the second entity to check collusion
-			vector<rigidBody>& second_entity = rigidBodies[j];
-
-			for (uint32_t k = 0; k < rigidBodies[i].size(); ++k) {			//k represents the rigid body elements of the first entity
-				for (uint32_t l = 0; l < rigidBodies[j].size(); ++l) {		//l represents the rigid body elements of the second entity
-					SphericalCollisionInfo info = checkSphericalCollision(first_entity[k], second_entity[l]);
-
-					if (info.isValid) {
-						first_entity[k].lineerVelocity += info.rb1VelocityChange;
-						second_entity[l].lineerVelocity += info.rb2VelocityChange;
-					}
-				}
-
+			if (info.isValid) {
+				m_rigidBodies[k].lineerVelocity += info.rb1VelocityChange;
+				m_rigidBodies[l].lineerVelocity += info.rb2VelocityChange;
 			}
 		}
-		
 
-		// Internal collusion calculation of first_entity
-		for (uint32_t internal_i = 0; internal_i < rigidBodies[i].size(); ++internal_i) {
-			for (uint32_t internal_j = internal_i + 1; internal_j < rigidBodies[i].size(); ++internal_j) {
-
-				SphericalCollisionInfo info = checkSphericalCollision(first_entity[internal_i], first_entity[internal_j]);
-
-				if (info.isValid) {
-					first_entity[internal_i].lineerVelocity += info.rb1VelocityChange;
-					first_entity[internal_j].lineerVelocity += info.rb2VelocityChange;
-				}
-
-			}
-
-		}
 	}
-
 }
 
 void RigidBodySystemSimulator::simulateTimestep(float timestep)
 {	
 
-	for (uint32_t j = 0; j < rigidBodies.size(); ++j) {
-		temp_RigidBodies=rigidBodies[j];
+	for (int i = 0; i < m_rigidBodies.size(); ++i) {
+		implementEuler(i, timestep);
+		//applyGravityToAll();
+		updateOrientation(i, timestep);
+		updateAngularVelocity(i, timestep);
 
-		for (int i = 0; i < rigidBodies[j].size(); ++i) {
-			implementEuler(i, timestep);
-			//applyGravityToAll();
-			updateOrientation(i, timestep);
-			updateAngularVelocity(i, timestep);
-
-			temp_RigidBodies[i].totalForce = 0;
-			temp_RigidBodies[i].torq = 0;
-		}
-		rigidBodies[j].swap(temp_RigidBodies);
+		m_rigidBodies[i].totalForce = 0;
+		m_rigidBodies[i].torq = 0;
 	}
+
 	applyForceOfCollusions(timestep);
 	if (m_updateCallback) {
-		m_updateCallback(rigidBodies);
+		m_updateCallback(m_rigidBodies);
 	}
 }
 
@@ -268,28 +235,28 @@ void RigidBodySystemSimulator::onMouse(int x, int y)
 
 int RigidBodySystemSimulator::getNumberOfRigidBodies()
 {
-	return temp_RigidBodies.size();
+	return m_rigidBodies.size();
 }
 
 Vec3 RigidBodySystemSimulator::getPositionOfRigidBody(int i)
 {
-	return temp_RigidBodies[i].center;
+	return m_rigidBodies[i].center;
 }
 
 Vec3 RigidBodySystemSimulator::getLinearVelocityOfRigidBody(int i)
 {
-	return temp_RigidBodies[i].lineerVelocity;
+	return m_rigidBodies[i].lineerVelocity;
 }
 
 Vec3 RigidBodySystemSimulator::getAngularVelocityOfRigidBody(int i)
 {
-	return temp_RigidBodies[i].angularVelocity;
+	return m_rigidBodies[i].angularVelocity;
 }
 
 void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
 {
-	temp_RigidBodies[i].totalForce += force;
-	temp_RigidBodies[i].torq += cross(loc- temp_RigidBodies[i].center, force);
+	m_rigidBodies[i].totalForce += force;
+	m_rigidBodies[i].torq += cross(loc- m_rigidBodies[i].center, force);
 }
 
 //void RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass)
@@ -335,73 +302,66 @@ size_t RigidBodySystemSimulator::addRigidBody(Vec3 position, float radius, int m
 	newRb.inverseInertiaTensor = newRb.inverseInertiaTensor.inverse();
 
 	//rigidBodies.push_back(newRb); //the rigid bodies are addded in the spheresystemsimulator
-	return rigidBodies.size() - 1;
+	return m_rigidBodies.size() - 1;
 	
 }
 
 void RigidBodySystemSimulator::setOrientationOf(int i, Quat orientation)
 {
-	temp_RigidBodies[i].orientation = orientation;
+	m_rigidBodies[i].orientation = orientation;
 }
 
 void RigidBodySystemSimulator::setVelocityOf(int i, Vec3 velocity)
 {
-	temp_RigidBodies[i].lineerVelocity = velocity;
+	m_rigidBodies[i].lineerVelocity = velocity;
 }
 
 Vec3 RigidBodySystemSimulator::getTotalForce(int i)
 {
-	return temp_RigidBodies[i].totalForce;
+	return m_rigidBodies[i].totalForce;
 }
 
 float RigidBodySystemSimulator::getMass(int i)
 {
-	return temp_RigidBodies[i].mass;
+	return m_rigidBodies[i].mass;
 }
 
 void RigidBodySystemSimulator::applyGravityToAll() {
 	
-	for (int i = 0; i < this->getNumberOfRigidBodies(); ++i) {
-		applyForceOnBody(i, temp_RigidBodies[i].center, temp_RigidBodies[i].mass * f_gravityAcc);
+	for (size_t i = 0; i < this->getNumberOfRigidBodies(); ++i) {
+		applyForceOnBody(i, m_rigidBodies[i].center, m_rigidBodies[i].mass * f_gravityAcc);
 	}
 }
 
-void RigidBodySystemSimulator::addEntities(vector<rigidBody>& Entity)
+void RigidBodySystemSimulator::addEntities(const vector<rigidBody>& Entity)
 {
-	rigidBodies.push_back(Entity);
+	m_rigidBodies.insert(m_rigidBodies.end(),Entity.begin(),Entity.end());
 }
 
 void RigidBodySystemSimulator::clearRigidBodies()
 {
-	// Clear the elements of the nested vectors
-	for (auto& v : rigidBodies) {
-		v.clear();
-		v.shrink_to_fit();
-	}
-	// Clear the elements of the vector of vectors
-	rigidBodies.clear();
-	// release the memory occupied by the vector of vectors
-	rigidBodies.shrink_to_fit();
+	// Clear the elements of the vector 
+	m_rigidBodies.clear();
 }
 
 void RigidBodySystemSimulator::implementEuler(int i, float timeStep)
 {
-	temp_RigidBodies[i].center += timeStep * temp_RigidBodies[i].lineerVelocity;
-	temp_RigidBodies[i].lineerVelocity += timeStep * temp_RigidBodies[i].totalForce / temp_RigidBodies[i].mass;
+	m_rigidBodies[i].center += timeStep * m_rigidBodies[i].lineerVelocity;
+	m_rigidBodies[i].lineerVelocity += timeStep * m_rigidBodies[i].totalForce / m_rigidBodies[i].mass;
 }
 
 void RigidBodySystemSimulator::updateOrientation(int i, float timestep)
 {
-	auto w = temp_RigidBodies[i].angularVelocity;
+	auto w = m_rigidBodies[i].angularVelocity;
 	Quat w_q = Quat(w.x, w.y, w.z, 0);
 	
-	temp_RigidBodies[i].orientation += (timestep / 2) * temp_RigidBodies[i].orientation * w_q;
-	temp_RigidBodies[i].orientation = temp_RigidBodies[i].orientation.unit();
+	m_rigidBodies[i].orientation += (timestep / 2) * m_rigidBodies[i].orientation * w_q;
+	m_rigidBodies[i].orientation = m_rigidBodies[i].orientation.unit();
 }
 
 void RigidBodySystemSimulator::updateAngularVelocity(int i,float timestep)
 {
-	rigidBody& object = temp_RigidBodies[i];
+	rigidBody& object = m_rigidBodies[i];
 
 	// update angular momentum
 	object.angularMomentum += timestep * object.torq;
@@ -413,12 +373,12 @@ void RigidBodySystemSimulator::updateAngularVelocity(int i,float timestep)
 	Mat4 currentInverseInertia = rotation * object.inverseInertiaTensor * rotation_t;
 
 	// update angular velocity
-	temp_RigidBodies[i].angularVelocity = currentInverseInertia * object.angularMomentum;
+	m_rigidBodies[i].angularVelocity = currentInverseInertia * object.angularMomentum;
 }
 
 Vec3 RigidBodySystemSimulator::getWorldSpaceVelocity(int i,Vec3 loc)
 {
-	return temp_RigidBodies[i].lineerVelocity + cross(temp_RigidBodies[i].angularVelocity, loc - temp_RigidBodies[i].center);
+	return m_rigidBodies[i].lineerVelocity + cross(m_rigidBodies[i].angularVelocity, loc - m_rigidBodies[i].center);
 }
 
 //void RigidBodySystemSimulator::setDemo1()
@@ -481,11 +441,10 @@ Vec3 RigidBodySystemSimulator::getWorldSpaceVelocity(int i,Vec3 loc)
 void RigidBodySystemSimulator::setProjectDemo()
 {
 	std::cout << "Project Demo!\n";
-	rigidBodies.clear();
+	clearRigidBodies();
 
 	addRigidBody(Vec3(-0.6, 0, 0), 0.2, 2.0);
 	setVelocityOf(0, Vec3(0.3, 0, 0));
-
 	addRigidBody(Vec3(0.6, 0, 0), 0.2, 2.0);
 	
 }

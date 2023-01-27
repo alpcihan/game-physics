@@ -30,8 +30,7 @@ DiffusionSimulator::DiffusionSimulator()
 	T = new Grid();
 	fillT(T);
 }
-
-DiffusionSimulator::DiffusionSimulator(uint32_t grid_w, uint32_t grid_h)
+DiffusionSimulator::DiffusionSimulator(uint16_t grid_w, uint16_t grid_h)
 {
 	m_iTestCase = 0;
 	m_vfMovableObjectPos = Vec3();

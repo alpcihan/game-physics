@@ -36,7 +36,7 @@ public:
 	Vec3 getTotalForce(int i);
 	float getMass(int i);
 	void applyGravityToAll();
-	void addEntities(vector<rigidBody>& entities);
+	void addEntities(const vector<rigidBody>& entities);
 	void clearRigidBodies();
 
 	void implementEuler(int i, float timeStep);
@@ -54,14 +54,13 @@ public:
 	void setDemo4();*/
 	void setProjectDemo();
 
-	using UpdateCallback = std::function<void(const std::vector<vector<rigidBody>>&)>;
+	using UpdateCallback = std::function<void(vector<rigidBody>&)>;
 	void setUpdateCallback(UpdateCallback callback) { m_updateCallback = callback; }
 
 private:
 	// Attributes
 	// add your RigidBodySystem data members, for e.g.,
-	vector<vector<rigidBody>> rigidBodies; //TODO: RigidBodies can be given from outside of the simulator and functions can get the rigid bodies as input
-	vector<rigidBody> temp_RigidBodies;
+	vector<rigidBody> m_rigidBodies;
 	Vec3 m_externalForce;
 
 	// UI Attributes

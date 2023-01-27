@@ -39,7 +39,7 @@ class DiffusionSimulator : public Simulator
 public:
 	// Construtors
 	DiffusionSimulator();
-	DiffusionSimulator(uint32_t grid_w, uint32_t grid_h);
+	DiffusionSimulator(uint16_t grid_w, uint16_t grid_h);
 	~DiffusionSimulator();
 
 	// Functions

@@ -6,15 +6,20 @@
 #include "RigidBodySystemSimulator.h"
 #include <unordered_map>
 
-
 #define NAIVEACC 0
 #define GRIDACC 1
 
+enum EntityType {
+	DEFAULT,
+	BULLET,
+	TARGET
+};
 
 class Entity{
 public:
 
-	Entity(){}
+	Entity():m_EntityType(EntityType::DEFAULT) {}
+	Entity(EntityType type):m_EntityType(type){}
 	~Entity(){}
 
 	void clear() {
@@ -22,6 +27,14 @@ public:
 		m_rigidBodies.clear();
 		m_rigidBodies.shrink_to_fit();
 
+	}
+
+	void draw(DrawingUtilitiesClass* DUC) {
+
+		for (size_t i = 0; i < m_rigidBodies.size(); ++i) {
+			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
+			DUC->drawSphere(m_rigidBodies[i].center, Vec3(m_rigidBodies[i].radius));
+		}
 	}
 
 	void addRigidBody(Vec3 position, float radius, int mass, Vec3 initialVelocity=Vec3(0.0)) {
@@ -48,20 +61,23 @@ public:
 		m_rigidBodies.push_back(newRb);
 
 	}
-	vector<rigidBody> getRigidBody() {
+	vector<rigidBody>& getRigidBody() {//make it get rigid bodies
 		return m_rigidBodies;
 	}
 
-	void updateRigidBodies(const vector<rigidBody>& rigidbodies) {
-
-		m_rigidBodies = rigidbodies;
-
+	size_t getNumberOfRigidBodies() {
+		return m_rigidBodies.size();
 	}
+
+	void updateRigidBodies(vector<rigidBody>& rigidbodies) { //TODO: Can be applied by move instead of '='
+		m_rigidBodies.insert(m_rigidBodies.begin(),rigidbodies.begin(), rigidbodies.end());
+	}
+	EntityType getEntityType() { return m_EntityType; } //if needed
 
 private:
 
 	vector<rigidBody> m_rigidBodies;
-
+	EntityType m_EntityType;//if needed
 };
 
 /// <summary>
@@ -79,11 +95,11 @@ public:
 	void reset();
 	void clearRigidBodies();
 
-	void addTarget(uint32_t n_x, uint32_t n_y);
+	void addTarget(uint16_t n_x, uint16_t n_y);
 	void addBullet();
 	void setScene();
 
-	void updateEntities(vector<vector<rigidBody>> updatedEntities);
+	void updateEntities(vector<rigidBody>& updatedEntities);
 	void drawFrame(ID3D11DeviceContext* pd3dImmediateContext);
 	void notifyCaseChanged(int testCase);
 	void externalForcesCalculations(float timeElapsed);
@@ -94,21 +110,14 @@ public:
 protected:
 	//int   m_iKernel; // index of the m_Kernels[5], more detials in SphereSystemSimulator.cpp
 	//static std::function<float(float)> m_Kernels[5];
-	
 	//int m_iAccelerator; // switch between NAIVEACC and GRIDACC, (optionally, KDTREEACC, 2)
 
-	vector<Entity> m_rigidBodies;
+	std::unordered_map<EntityType,Entity> m_entities;
 	
 	RigidBodySystemSimulator* m_pRigidBodySimulator;
 	DiffusionSimulator* m_pDiffusionSimulator;
 
-	uint32_t bulletsEntityIdx;
-
-	// for Demo 3 only:
-	// you will need multiple SphereSystem objects to do comparisons in Demo 3
-	// m_iAccelerator should be ignored.
-	// SphereSystem * m_pSphereSystemGrid; 
-
+	uint16_t grid_w,grid_h;
 };
 
 #endif

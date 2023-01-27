@@ -13,7 +13,7 @@
 SphereSystemSimulator::SphereSystemSimulator()
 {
 	this->m_iTestCase = 0;	
-	m_pDiffusionSimulator = new DiffusionSimulator();
+	//m_pDiffusionSimulator = new DiffusionSimulator(grid_w,grid_h);
 	m_pRigidBodySimulator = new RigidBodySystemSimulator();
 
 	m_pRigidBodySimulator->setUpdateCallback(std::bind(&SphereSystemSimulator::updateEntities, this, std::placeholders::_1));
@@ -38,33 +38,25 @@ void SphereSystemSimulator::reset()
 }
 
 void SphereSystemSimulator::clearRigidBodies() {
-
 	// Clear the elements of the nested vectors
-	for (auto& v : m_rigidBodies)
-		v.clear();
-	// Clear the elements of the vector of vectors
-	m_rigidBodies.clear();
-	// release the memory occupied by the vector of vectors
-	m_rigidBodies.shrink_to_fit();
+	for (auto& entity: m_entities) {
+		entity.second.clear();
+	}
 }
 
-void SphereSystemSimulator::addTarget(uint32_t n_x, uint32_t n_y)
+void SphereSystemSimulator::addTarget(uint16_t n_x, uint16_t n_y)
 {
-	Entity targetEntity;
 	float scale = 0.1f;
-	for (uint32_t i = 0; i < n_x; ++i) {
-		for (uint32_t j = 0; j < n_y; ++j) {
+	for (uint16_t i = 0; i < n_x; ++i) {
+		for (uint16_t j = 0; j < n_y; ++j) {
 
 			float x = (i - n_x * 0.5) * scale, y = (j- n_y* 0.5) * scale;
-			targetEntity.addRigidBody(Vec3(x,y,0.0), 0.1, 2);
+			m_entities[EntityType::TARGET].addRigidBody(Vec3(x, y, 0.0), 0.1, 2);
 		}
 	}
-
-	m_rigidBodies.push_back(targetEntity);
 }
 
-
-void SphereSystemSimulator::addBullet()
+void SphereSystemSimulator::addBullet()// TODO: Define the function with initial bullet speed(which can be set from UI) and position(from eye pointer) 
 {
 	Vec3 cameraPos = Vec3(0.0, -3.0, 0.0);//Vec3(DUC->g_camera.GetEyePt());//IF we call from addBullet from constructer the DUC is not initialised yet thats why gives error
 
@@ -72,59 +64,57 @@ void SphereSystemSimulator::addBullet()
 	Vec3 bulletPosition = cameraPos + 0.7 * cameraFrontVec;
 	Vec3 bulletVelocity = 7 * cameraFrontVec;
 
-	m_rigidBodies[bulletsEntityIdx].addRigidBody(bulletPosition, 0.07, 2.0, bulletVelocity);
+	m_entities[EntityType::BULLET].addRigidBody(bulletPosition, 0.07, 2.0, bulletVelocity);
 
 }
-
-
 
 void SphereSystemSimulator::setScene()
 {
 	reset();
 	addTarget(12, 12);
-	Entity bullet;//empty bullet entity
-	m_rigidBodies.push_back(bullet);
-	bulletsEntityIdx = m_rigidBodies.size() - 1;
-
 	addBullet();
-	for (auto entity : m_rigidBodies) {
-
-		m_pRigidBodySimulator->addEntities(entity.getRigidBody());
+	for (auto entity : m_entities) {
+		m_pRigidBodySimulator->addEntities(entity.second.getRigidBody());
 	}
 }
 
-void SphereSystemSimulator::updateEntities(vector<vector<rigidBody>> updatedEntities)
+void SphereSystemSimulator::updateEntities(vector<rigidBody> &rigidBodyBuffer)
 {
-	for (uint32_t i = 0; i < updatedEntities.size();++i) {
-		m_rigidBodies[i].updateRigidBodies(updatedEntities[i]);
+	//// Assert that the number of rigid bodies in the buffer is not less than the total number of rigid bodies in all entities
+	//assert(rigidBodyBuffer.size() >= m_totalNumRigidBodies);
+
+	// Create an iterator pointing to the beginning of the buffer
+	auto bufferIdx = rigidBodyBuffer.begin();
+
+	for (auto entity : m_entities) {
+
+		// Get the end iterator of the current entity's rigid bodies in the buffer
+		auto bufferIdxEndOfEntity = bufferIdx + entity.second.getNumberOfRigidBodies();
+
+		vector<rigidBody> temp_rigidBodies;
+		temp_rigidBodies.insert(temp_rigidBodies.end(), bufferIdx, bufferIdxEndOfEntity);
+		entity.second.clear();
+		entity.second.updateRigidBodies(temp_rigidBodies);
+		bufferIdx = bufferIdxEndOfEntity;
 	}
+
+	// Assert that the buffer iterator reached the end of the buffer
+	assert(bufferIdx == rigidBodyBuffer.end());
 }
 
 void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
-	
-	for (uint32_t i = 0; i < m_rigidBodies.size(); ++i) {
 
-		vector<rigidBody> temp_RigidBodies = m_rigidBodies[i].getRigidBody();	// Rigidbodies of the entity i
+	for (auto& entity: m_entities) {
+		//entity.second.draw(DUC);
+		vector<rigidBody>& temp_rigidBodies=entity.second.getRigidBody();
 
-		for (uint32_t j = 0; j < temp_RigidBodies.size(); ++j) {
-			rigidBody& rb=temp_RigidBodies[j];
+		for (size_t i = 0; i < temp_rigidBodies.size(); ++i) {
 			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
-
-			DUC->drawSphere(rb.center, Vec3(rb.radius));
+			DUC->drawSphere(temp_rigidBodies[i].center, Vec3(temp_rigidBodies[i].radius));
 		}
-
 	}
 
-	//rigidBody rb;
-	//for (int i = 0; i < this->getNumberOfRigidBodies(); ++i) {
-	//	//Mat4 transform=getObject2WorldSpaceMatrix(temp_RigidBodies[i]);
-	//	rb = temp_RigidBodies[i];
-	//	DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
-	//	//DUC->drawRigidBody(transform);
-
-	//	DUC->drawSphere(rb.center, Vec3(rb.radius));
-	//}
 }
 
 void SphereSystemSimulator::notifyCaseChanged(int testCase)
@@ -147,6 +137,10 @@ void SphereSystemSimulator::externalForcesCalculations(float timeElapsed)
 void SphereSystemSimulator::simulateTimestep(float timeStep)
 {
 	//m_pDiffusionSimulator->simulateTimestep(timeStep);
+	//Grid grid = m_pDiffusionSimulator->getGrid();
+	
+	//TODO: For target there need to be an index value aswell 
+
 	//check the heat values and set the point validity
 	m_pRigidBodySimulator->simulateTimestep(timeStep);
 
