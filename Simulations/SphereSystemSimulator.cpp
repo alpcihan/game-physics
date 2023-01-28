@@ -73,7 +73,7 @@ void SphereSystemSimulator::setScene()
 	reset();
 	addTarget(12, 12);
 	addBullet();
-	for (auto entity : m_entities) {
+	for (auto& entity : m_entities) {
 		m_pRigidBodySimulator->addEntities(entity.second.getRigidBody());
 	}
 }
@@ -86,14 +86,13 @@ void SphereSystemSimulator::updateEntities(vector<rigidBody> &rigidBodyBuffer)
 	// Create an iterator pointing to the beginning of the buffer
 	auto bufferIdx = rigidBodyBuffer.begin();
 
-	for (auto entity : m_entities) {
+	for (auto& entity : m_entities) {
 
 		// Get the end iterator of the current entity's rigid bodies in the buffer
 		auto bufferIdxEndOfEntity = bufferIdx + entity.second.getNumberOfRigidBodies();
 
 		vector<rigidBody> temp_rigidBodies;
 		temp_rigidBodies.insert(temp_rigidBodies.end(), bufferIdx, bufferIdxEndOfEntity);
-		entity.second.clear();
 		entity.second.updateRigidBodies(temp_rigidBodies);
 		bufferIdx = bufferIdxEndOfEntity;
 	}
@@ -106,13 +105,7 @@ void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
 
 	for (auto& entity: m_entities) {
-		//entity.second.draw(DUC);
-		vector<rigidBody>& temp_rigidBodies=entity.second.getRigidBody();
-
-		for (size_t i = 0; i < temp_rigidBodies.size(); ++i) {
-			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
-			DUC->drawSphere(temp_rigidBodies[i].center, Vec3(temp_rigidBodies[i].radius));
-		}
+		entity.second.draw(DUC);
 	}
 
 }
@@ -138,8 +131,6 @@ void SphereSystemSimulator::simulateTimestep(float timeStep)
 {
 	//m_pDiffusionSimulator->simulateTimestep(timeStep);
 	//Grid grid = m_pDiffusionSimulator->getGrid();
-	
-	//TODO: For target there need to be an index value aswell 
 
 	//check the heat values and set the point validity
 	m_pRigidBodySimulator->simulateTimestep(timeStep);

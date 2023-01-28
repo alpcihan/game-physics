@@ -23,10 +23,8 @@ public:
 	~Entity(){}
 
 	void clear() {
-
 		m_rigidBodies.clear();
-		m_rigidBodies.shrink_to_fit();
-
+		//m_rigidBodies.shrink_to_fit();
 	}
 
 	void draw(DrawingUtilitiesClass* DUC) {
@@ -70,7 +68,7 @@ public:
 	}
 
 	void updateRigidBodies(vector<rigidBody>& rigidbodies) { //TODO: Can be applied by move instead of '='
-		m_rigidBodies.insert(m_rigidBodies.begin(),rigidbodies.begin(), rigidbodies.end());
+		m_rigidBodies = rigidbodies;//.insert(m_rigidBodies.begin(),rigidbodies.begin(), rigidbodies.end());
 	}
 	EntityType getEntityType() { return m_EntityType; } //if needed
 
