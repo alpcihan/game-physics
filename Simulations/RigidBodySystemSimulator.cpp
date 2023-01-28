@@ -170,7 +170,7 @@ void RigidBodySystemSimulator::applyForceOfCollusions(float timestep) {
 	// Collusion calculation of rigid bodies
 
 	for (size_t k = 0; k < m_rigidBodies.size(); ++k) {		
-		for (size_t l = k+1; l < m_rigidBodies.size()-1; ++l) {	
+		for (size_t l = k+1; l < m_rigidBodies.size(); ++l) {	
 			SphericalCollisionInfo info = checkSphericalCollision(m_rigidBodies[k], m_rigidBodies[l]);
 
 			if (info.isValid) {
