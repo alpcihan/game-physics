@@ -24,6 +24,9 @@ public:
 
 	void clear() {
 		m_rigidBodies.clear();
+
+
+
 		//m_rigidBodies.shrink_to_fit();
 	}
 
@@ -115,7 +118,8 @@ protected:
 	RigidBodySystemSimulator* m_pRigidBodySimulator;
 	DiffusionSimulator* m_pDiffusionSimulator;
 
-	uint16_t grid_w,grid_h;
+	uint32_t grid_w,grid_h;
+	Grid* m_targetGrid;
 };
 
 #endif

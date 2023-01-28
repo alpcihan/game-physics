@@ -13,7 +13,9 @@
 SphereSystemSimulator::SphereSystemSimulator()
 {
 	this->m_iTestCase = 0;	
-	//m_pDiffusionSimulator = new DiffusionSimulator(grid_w,grid_h);
+	grid_w = 32;
+	grid_h = 32;
+	m_pDiffusionSimulator = new DiffusionSimulator(grid_w,grid_h);
 	m_pRigidBodySimulator = new RigidBodySystemSimulator();
 
 	m_pRigidBodySimulator->setUpdateCallback(std::bind(&SphereSystemSimulator::updateEntities, this, std::placeholders::_1));
@@ -105,7 +107,18 @@ void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
 
 	for (auto& entity: m_entities) {
-		entity.second.draw(DUC);
+		//entity.second.draw(DUC);
+		vector<rigidBody>& temp_rigidBodies=entity.second.getRigidBody();
+		
+
+		for (size_t i = 0; i < temp_rigidBodies.size(); ++i) {
+			Real t = m_targetGrid->get(i / grid_w, i % grid_w);
+			Vec3 color = (t, 0, -t);
+
+			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, color);
+			DUC->drawSphere(temp_rigidBodies[i].center, Vec3(temp_rigidBodies[i].radius));
+		}
+	
 	}
 
 }
@@ -129,9 +142,7 @@ void SphereSystemSimulator::externalForcesCalculations(float timeElapsed)
 
 void SphereSystemSimulator::simulateTimestep(float timeStep)
 {
-	//m_pDiffusionSimulator->simulateTimestep(timeStep);
-	//Grid grid = m_pDiffusionSimulator->getGrid();
-
+	m_targetGrid= m_pDiffusionSimulator->diffuseTemperatureExplicit(timeStep);
 	//check the heat values and set the point validity
 	m_pRigidBodySimulator->simulateTimestep(timeStep);
 

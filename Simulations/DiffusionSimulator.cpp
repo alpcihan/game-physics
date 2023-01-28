@@ -3,14 +3,30 @@
 using namespace std;
 
 Grid::Grid(uint32_t w = 16, uint32_t h = 16)
-	: m_w(w), m_h(h)
 {
+	m_w = w;
+	m_h = h;
+
 	PointInfo initVals;
 	initVals.isActive = true;
 	initVals.temp = 0;
 
 	m_temps = std::vector<PointInfo>(w * h, initVals);
 	m_T = std::vector<PointInfo>(w * h, initVals);
+}
+
+Grid::Grid(Grid* T)
+{
+	m_temps = T->get();
+	m_T = T->get();
+}
+
+Grid& Grid::operator=(Grid* T)
+{
+	m_temps = T->get();
+	m_T = T->get();
+	// TODO: insert return statement here
+	return *this;
 }
 
 void Grid::applyUpdates()
@@ -27,10 +43,10 @@ DiffusionSimulator::DiffusionSimulator()
 	m_vfMovableObjectFinalPos = Vec3();
 	m_vfRotate = Vec3();
 	// to be implemented
-	T = new Grid();
+	T = new Grid(m_nx,m_ny);
 	fillT(T);
 }
-DiffusionSimulator::DiffusionSimulator(uint16_t grid_w, uint16_t grid_h)
+DiffusionSimulator::DiffusionSimulator(uint32_t grid_w, uint32_t grid_h)
 {
 	m_iTestCase = 0;
 	m_vfMovableObjectPos = Vec3();

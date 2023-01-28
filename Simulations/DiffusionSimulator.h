@@ -14,8 +14,11 @@ public:
 	};
 
 	// Construtors
+	Grid();
 	Grid(uint32_t w, uint32_t h);
-
+	Grid(Grid* T);
+	Grid& operator=(Grid * T);
+	
 	uint32_t w() const { return m_w; }
 	uint32_t h() const { return m_h; }
 
@@ -39,7 +42,7 @@ class DiffusionSimulator : public Simulator
 public:
 	// Construtors
 	DiffusionSimulator();
-	DiffusionSimulator(uint16_t grid_w, uint16_t grid_h);
+	DiffusionSimulator(uint32_t grid_w, uint32_t grid_h);
 	~DiffusionSimulator();
 
 	// Functions
@@ -68,8 +71,8 @@ private:
 	Point2D m_oldtrackmouse;
 	
 	float m_alpha = 1;
-	int m_nx = 16;
-	int m_ny = 16;
+	uint32_t m_nx = 16;
+	uint32_t m_ny = 16;
 	Grid* T; // save results of every timestep
 };
 
