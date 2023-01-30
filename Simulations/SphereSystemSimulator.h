@@ -35,7 +35,7 @@ public:
 		}
 	}
 
-	void addRigidBody(Vec3 position, float radius, int mass, Vec3 initialVelocity=Vec3(0.0)) {
+	void addRigidBody(Vec3 position, float radius, int mass, bool isStatic=false, Vec3 initialVelocity=Vec3(0.0)) {
 
 		//m_rigidBodies.push_back(rigidBody);
 		rigidBody newRb;
@@ -43,6 +43,7 @@ public:
 		newRb.radius = radius;
 		newRb.mass = mass;
 		newRb.angularVelocity = Vec3(0.0);
+		newRb.isStatic = isStatic;
 		newRb.lineerVelocity = initialVelocity;
 		newRb.totalForce = 0;
 		newRb.onedivMass = 1.0 / mass;

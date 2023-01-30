@@ -51,7 +51,7 @@ void SphereSystemSimulator::addTarget(uint16_t n_x, uint16_t n_y)
 		for (uint16_t j = 0; j < n_y; ++j) {
 
 			float x = (i - n_x * 0.5) * scale, y = (j- n_y* 0.5) * scale;
-			m_entities[EntityType::TARGET].addRigidBody(Vec3(x, y, 0.0), 0.1, 2);
+			m_entities[EntityType::TARGET].addRigidBody(Vec3(x, y, 0.0), 0.1, 2, true);
 		}
 	}
 }
@@ -64,7 +64,7 @@ void SphereSystemSimulator::addBullet()// TODO: Define the function with initial
 	Vec3 bulletPosition = cameraPos + 0.7 * cameraFrontVec;
 	Vec3 bulletVelocity = 7 * cameraFrontVec;
 
-	m_entities[EntityType::BULLET].addRigidBody(bulletPosition, 0.07, 2.0, bulletVelocity);
+	m_entities[EntityType::BULLET].addRigidBody(bulletPosition, 0.07, 2.0, false, bulletVelocity);
 
 }
 
