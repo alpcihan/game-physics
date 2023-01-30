@@ -112,6 +112,8 @@ public:
 	void simulateTimestep(float timeStep);
 	void onClick(int x, int y);
 	void onMouse(int x, int y);
+
+	void rotateCameraBy(Vec3 rotation);
 	
 protected:
 	//int   m_iKernel; // index of the m_Kernels[5], more detials in SphereSystemSimulator.cpp
@@ -124,6 +126,9 @@ protected:
 	DiffusionSimulator* m_pDiffusionSimulator;
 
 	uint16_t grid_w,grid_h;
+
+	Point2D m_oldmouse;
+	Point2D m_mouse;
 };
 
 #endif

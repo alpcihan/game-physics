@@ -34,6 +34,9 @@ void SphereSystemSimulator::reset()
 {
 	clearRigidBodies();
 	m_pRigidBodySimulator->reset();
+
+	m_mouse.x = m_mouse.y = 0;
+	m_oldmouse.x = m_oldmouse.y = 0;
 	//TODO: write here 
 }
 
@@ -144,4 +147,12 @@ void SphereSystemSimulator::onClick(int x, int y)
 
 void SphereSystemSimulator::onMouse(int x, int y)
 {
+	//std::cout << x << "\t" << y << std::endl;
+
+	CModelViewerCamera& cam = DUC->g_camera;
+	XMMATRIX rotation = XMMatrixRotationRollPitchYaw(0.0f, 5.0f, 0.0f);
+	cam.SetWorldMatrix(cam.GetWorldMatrix() * rotation);
+}
+
+void SphereSystemSimulator::rotateCameraBy(Vec3 rotation) {
 }
