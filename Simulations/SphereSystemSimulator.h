@@ -38,7 +38,7 @@ public:
 		}
 	}
 
-	void addRigidBody(Vec3 position, float radius, int mass, Vec3 initialVelocity=Vec3(0.0)) {
+	void addRigidBody(Vec3 position, float radius, int mass, bool isStatic=false, Vec3 initialVelocity=Vec3(0.0)) {
 
 		//m_rigidBodies.push_back(rigidBody);
 		rigidBody newRb;
@@ -49,6 +49,7 @@ public:
 		newRb.lineerVelocity = initialVelocity;
 		newRb.totalForce = 0;
 		newRb.onedivMass = 1.0 / mass;
+		newRb.isStatic = isStatic;
 
 		// Change interial vals later
 		Vec3 sphericalInertiaVals(0.0);
@@ -101,7 +102,7 @@ public:
 	void setScene();
 
 	void updateEntities(vector<rigidBody>& updatedEntities);
-	void drawFrame(ID3D11DeviceContext* pd3dImmediateContext);
+	void drawFrame(ID3D11DeviceContext* pd3dImmediateContext); //TODO: Draw bullet and target seperately 
 	void notifyCaseChanged(int testCase);
 	void externalForcesCalculations(float timeElapsed);
 	void simulateTimestep(float timeStep);

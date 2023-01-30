@@ -77,5 +77,6 @@ private:
 };
 
 void fillT(Grid *T);
+void fillRandT(Grid* grid);
 
 #endif

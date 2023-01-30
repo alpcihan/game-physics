@@ -19,7 +19,6 @@ SphereSystemSimulator::SphereSystemSimulator()
 	m_pRigidBodySimulator = new RigidBodySystemSimulator();
 
 	m_pRigidBodySimulator->setUpdateCallback(std::bind(&SphereSystemSimulator::updateEntities, this, std::placeholders::_1));
-
 }
 
 const char* SphereSystemSimulator::getTestCasesStr()
@@ -53,7 +52,8 @@ void SphereSystemSimulator::addTarget(uint16_t n_x, uint16_t n_y)
 		for (uint16_t j = 0; j < n_y; ++j) {
 
 			float x = (i - n_x * 0.5) * scale, y = (j- n_y* 0.5) * scale;
-			m_entities[EntityType::TARGET].addRigidBody(Vec3(x, y, 0.0), 0.1, 2);
+			m_entities[EntityType::TARGET].addRigidBody(Vec3(x, y, 0.0), 0.1, 2,true);
+
 		}
 	}
 }
@@ -66,7 +66,7 @@ void SphereSystemSimulator::addBullet()// TODO: Define the function with initial
 	Vec3 bulletPosition = cameraPos + 0.7 * cameraFrontVec;
 	Vec3 bulletVelocity = 7 * cameraFrontVec;
 
-	m_entities[EntityType::BULLET].addRigidBody(bulletPosition, 0.07, 2.0, bulletVelocity);
+	m_entities[EntityType::BULLET].addRigidBody(bulletPosition, 0.07, 2.0, false,bulletVelocity);
 
 }
 
@@ -109,7 +109,6 @@ void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 	for (auto& entity: m_entities) {
 		//entity.second.draw(DUC);
 		vector<rigidBody>& temp_rigidBodies=entity.second.getRigidBody();
-		
 
 		for (size_t i = 0; i < temp_rigidBodies.size(); ++i) {
 			Real t = m_targetGrid->get(i / grid_w, i % grid_w);

@@ -54,7 +54,7 @@ DiffusionSimulator::DiffusionSimulator(uint32_t grid_w, uint32_t grid_h)
 	m_vfRotate = Vec3();
 	// to be implemented
 	T = new Grid(grid_w,grid_h);
-	fillT(T);
+	fillRandT(T);
 }
 
 DiffusionSimulator::~DiffusionSimulator()
@@ -175,13 +175,7 @@ void setupB(std::vector<Real> &b, Grid *T)
 	}
 }
 
-void fillT(Grid *grid)
-{ // add your own parameters
-	// to be implemented
-	// fill T with solved vector x
-	// make sure that the temperature in boundary cells stays zero
-	std::mt19937 eng;
-	std::uniform_real_distribution<double> randTemp(-1.0f, 1.0f);
+void fillT(Grid* grid) {
 
 	for (int w = 1; w < grid->w() - 1; w++)
 	{
@@ -191,11 +185,28 @@ void fillT(Grid *grid)
 
 			if (w >= (grid->w() / 2 - grid->w() / 4) && w <= (grid->w() / 2 + grid->w() / 4) && h >= (grid->h() / 2 - grid->h() / 4) && w <= (grid->h() / 2 + grid->h() / 4)) {
 
-				grid->setPointStatus(w,h, false);
+				grid->setPointStatus(w, h, false);
 				grid->set(w, h, 0);
 				continue;
 			}
 #endif // DEBUG
+			grid->set(w, h, 0);
+		}
+	}
+
+	grid->applyUpdates();
+
+}
+
+void fillRandT(Grid *grid)
+{
+	std::mt19937 eng;
+	std::uniform_real_distribution<double> randTemp(-1.0f, 1.0f);
+
+	for (int w = 1; w < grid->w() - 1; w++)
+	{
+		for (int h = 1; h < grid->h() - 1; h++)
+		{
 			grid->set(w, h, randTemp(eng));
 		}
 	}
