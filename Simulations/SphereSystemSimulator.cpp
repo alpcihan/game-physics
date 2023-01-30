@@ -58,13 +58,14 @@ void SphereSystemSimulator::addTarget(uint16_t n_x, uint16_t n_y)
 
 void SphereSystemSimulator::addBullet()// TODO: Define the function with initial bullet speed(which can be set from UI) and position(from eye pointer) 
 {
-	Vec3 cameraPos = Vec3(0.0, -3.0, 0.0);//Vec3(DUC->g_camera.GetEyePt());//IF we call from addBullet from constructer the DUC is not initialised yet thats why gives error
+	Vec3 cameraPos = Vec3(DUC->g_camera.GetEyePt()); //Vec3(0.0, -3.0, 0.0);//IF we call from addBullet from constructer the DUC is not initialised yet thats why gives error
 
 	Vec3 cameraFrontVec = -cameraPos / sqrt(cameraPos.squaredDistanceTo(Vec3(0.0)));
 	Vec3 bulletPosition = cameraPos + 0.7 * cameraFrontVec;
 	Vec3 bulletVelocity = 7 * cameraFrontVec;
 
-	m_entities[EntityType::BULLET].addRigidBody(bulletPosition, 0.07, 2.0, bulletVelocity);
+	size_t idx = m_entities[EntityType::BULLET].addRigidBody(bulletPosition, 0.07, 2.0, bulletVelocity);
+	m_pRigidBodySimulator->addEntity(m_entities[EntityType::BULLET].getRigidBody(idx));
 
 }
 
@@ -72,9 +73,8 @@ void SphereSystemSimulator::setScene()
 {
 	reset();
 	addTarget(12, 12);
-	addBullet();
 	for (auto& entity : m_entities) {
-		m_pRigidBodySimulator->addEntities(entity.second.getRigidBody());
+		m_pRigidBodySimulator->addEntities(entity.second.getRigidBodies());
 	}
 }
 
@@ -139,6 +139,7 @@ void SphereSystemSimulator::simulateTimestep(float timeStep)
 
 void SphereSystemSimulator::onClick(int x, int y)
 {
+	addBullet();
 }
 
 void SphereSystemSimulator::onMouse(int x, int y)

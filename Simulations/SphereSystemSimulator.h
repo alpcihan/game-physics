@@ -35,7 +35,7 @@ public:
 		}
 	}
 
-	void addRigidBody(Vec3 position, float radius, int mass, Vec3 initialVelocity=Vec3(0.0)) {
+	size_t addRigidBody(Vec3 position, float radius, int mass, Vec3 initialVelocity=Vec3(0.0)) {
 
 		//m_rigidBodies.push_back(rigidBody);
 		rigidBody newRb;
@@ -58,9 +58,16 @@ public:
 
 		m_rigidBodies.push_back(newRb);
 
+		return m_rigidBodies.size() - 1;
+
 	}
-	vector<rigidBody>& getRigidBody() {//make it get rigid bodies
+
+	vector<rigidBody>& getRigidBodies() {//make it get rigid bodies
 		return m_rigidBodies;
+	}
+
+	rigidBody& getRigidBody(size_t idx) {
+		return m_rigidBodies[idx];
 	}
 
 	size_t getNumberOfRigidBodies() {

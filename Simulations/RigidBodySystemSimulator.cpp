@@ -338,6 +338,12 @@ void RigidBodySystemSimulator::addEntities(const vector<rigidBody>& Entity)
 	m_rigidBodies.insert(m_rigidBodies.end(),Entity.begin(),Entity.end());
 }
 
+void RigidBodySystemSimulator::addEntity(const rigidBody& entity)
+{
+	m_rigidBodies.push_back(entity);
+}
+
+
 void RigidBodySystemSimulator::clearRigidBodies()
 {
 	// Clear the elements of the vector 
