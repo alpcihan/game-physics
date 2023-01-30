@@ -35,7 +35,7 @@ public:
 		}
 	}
 
-	void addRigidBody(Vec3 position, float radius, int mass, bool isStatic=false, Vec3 initialVelocity=Vec3(0.0)) {
+	size_t addRigidBody(Vec3 position, float radius, int mass, bool isStatic=false, Vec3 initialVelocity=Vec3(0.0)) {
 
 		//m_rigidBodies.push_back(rigidBody);
 		rigidBody newRb;

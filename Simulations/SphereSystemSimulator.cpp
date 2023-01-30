@@ -64,7 +64,7 @@ void SphereSystemSimulator::addBullet()// TODO: Define the function with initial
 	Vec3 bulletPosition = cameraPos + 0.7 * cameraFrontVec;
 	Vec3 bulletVelocity = 7 * cameraFrontVec;
 
-	size_t idx = m_entities[EntityType::BULLET].addRigidBody(bulletPosition, 0.07, 2.0, bulletVelocity);
+	size_t idx = m_entities[EntityType::BULLET].addRigidBody(bulletPosition, 0.07, 2.0, false, bulletVelocity);
 	m_pRigidBodySimulator->addEntity(m_entities[EntityType::BULLET].getRigidBody(idx));
 
 }
