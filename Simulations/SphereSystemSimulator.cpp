@@ -132,8 +132,8 @@ void SphereSystemSimulator::externalForcesCalculations(float timeElapsed)
 
 void SphereSystemSimulator::simulateTimestep(float timeStep)
 {
-	//m_pDiffusionSimulator->simulateTimestep(timeStep);
-	//Grid grid = m_pDiffusionSimulator->getGrid();
+	m_pDiffusionSimulator->simulateTimestep(timeStep);
+	Grid grid = m_pDiffusionSimulator->getGrid();
 
 	//check the heat values and set the point validity
 	m_pRigidBodySimulator->simulateTimestep(timeStep);
@@ -149,9 +149,9 @@ void SphereSystemSimulator::onMouse(int x, int y)
 {
 	//std::cout << x << "\t" << y << std::endl;
 
-	CModelViewerCamera& cam = DUC->g_camera;
-	XMMATRIX rotation = XMMatrixRotationRollPitchYaw(0.0f, 5.0f, 0.0f);
-	cam.SetWorldMatrix(cam.GetWorldMatrix() * rotation);
+	//CModelViewerCamera& cam = DUC->g_camera;
+	//XMMATRIX rotation = XMMatrixRotationRollPitchYaw(0.0f, 5.0f, 0.0f);
+	//cam.SetWorldMatrix(cam.GetWorldMatrix() * rotation);
 }
 
 void SphereSystemSimulator::rotateCameraBy(Vec3 rotation) {

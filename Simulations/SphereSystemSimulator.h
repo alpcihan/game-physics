@@ -59,6 +59,7 @@ public:
 
 		m_rigidBodies.push_back(newRb);
 
+		std::cout << m_rigidBodies.size() - 1 << std::endl;
 		return m_rigidBodies.size() - 1;
 
 	}
