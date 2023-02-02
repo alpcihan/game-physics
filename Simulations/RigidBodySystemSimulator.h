@@ -37,6 +37,7 @@ public:
 	float getMass(int i);
 	void applyGravityToAll();
 	void addEntities(const vector<rigidBody>& entities);
+	void addEntity(const rigidBody& entity);
 	void clearRigidBodies();
 
 	void implementEuler(int i, float timeStep);

@@ -38,7 +38,7 @@ public:
 		}
 	}
 
-	void addRigidBody(Vec3 position, float radius, int mass, bool isStatic=false, Vec3 initialVelocity=Vec3(0.0)) {
+	size_t addRigidBody(Vec3 position, float radius, int mass, bool isStatic=false, Vec3 initialVelocity=Vec3(0.0)) {
 
 		//m_rigidBodies.push_back(rigidBody);
 		rigidBody newRb;
@@ -46,10 +46,10 @@ public:
 		newRb.radius = radius;
 		newRb.mass = mass;
 		newRb.angularVelocity = Vec3(0.0);
+		newRb.isStatic = isStatic;
 		newRb.lineerVelocity = initialVelocity;
 		newRb.totalForce = 0;
 		newRb.onedivMass = 1.0 / mass;
-		newRb.isStatic = isStatic;
 
 		// Change interial vals later
 		Vec3 sphericalInertiaVals(0.0);
@@ -62,9 +62,16 @@ public:
 
 		m_rigidBodies.push_back(newRb);
 
+		return m_rigidBodies.size() - 1;
+
 	}
-	vector<rigidBody>& getRigidBody() {//make it get rigid bodies
+
+	vector<rigidBody>& getRigidBodies() {//make it get rigid bodies
 		return m_rigidBodies;
+	}
+
+	rigidBody& getRigidBody(size_t idx) {
+		return m_rigidBodies[idx];
 	}
 
 	size_t getNumberOfRigidBodies() {
@@ -108,6 +115,8 @@ public:
 	void simulateTimestep(float timeStep);
 	void onClick(int x, int y);
 	void onMouse(int x, int y);
+
+	void rotateCameraBy(Vec3 rotation);
 	
 protected:
 	//int   m_iKernel; // index of the m_Kernels[5], more detials in SphereSystemSimulator.cpp
@@ -119,8 +128,11 @@ protected:
 	RigidBodySystemSimulator* m_pRigidBodySimulator;
 	DiffusionSimulator* m_pDiffusionSimulator;
 
-	uint32_t grid_w,grid_h;
 	Grid* m_targetGrid;
+	uint16_t grid_w,grid_h;
+
+	Point2D m_oldmouse;
+	Point2D m_mouse;
 };
 
 #endif

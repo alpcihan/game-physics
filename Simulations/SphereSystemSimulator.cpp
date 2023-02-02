@@ -35,6 +35,9 @@ void SphereSystemSimulator::reset()
 {
 	clearRigidBodies();
 	m_pRigidBodySimulator->reset();
+
+	m_mouse.x = m_mouse.y = 0;
+	m_oldmouse.x = m_oldmouse.y = 0;
 	//TODO: write here 
 }
 
@@ -52,21 +55,21 @@ void SphereSystemSimulator::addTarget(uint16_t n_x, uint16_t n_y)
 		for (uint16_t j = 0; j < n_y; ++j) {
 
 			float x = (i - n_x * 0.5) * scale, y = (j- n_y* 0.5) * scale;
-			m_entities[EntityType::TARGET].addRigidBody(Vec3(x, y, 0.0), 0.1, 2,true);
-
+			m_entities[EntityType::TARGET].addRigidBody(Vec3(x, y, 0.0), 0.1, 2, true);
 		}
 	}
 }
 
 void SphereSystemSimulator::addBullet()// TODO: Define the function with initial bullet speed(which can be set from UI) and position(from eye pointer) 
 {
-	Vec3 cameraPos = Vec3(0.0, -3.0, 0.0);//Vec3(DUC->g_camera.GetEyePt());//IF we call from addBullet from constructer the DUC is not initialised yet thats why gives error
+	Vec3 cameraPos = Vec3(DUC->g_camera.GetEyePt()); //Vec3(0.0, -3.0, 0.0);//IF we call from addBullet from constructer the DUC is not initialised yet thats why gives error
 
 	Vec3 cameraFrontVec = -cameraPos / sqrt(cameraPos.squaredDistanceTo(Vec3(0.0)));
 	Vec3 bulletPosition = cameraPos + 0.7 * cameraFrontVec;
 	Vec3 bulletVelocity = 7 * cameraFrontVec;
 
-	m_entities[EntityType::BULLET].addRigidBody(bulletPosition, 0.07, 2.0, false,bulletVelocity);
+	size_t idx = m_entities[EntityType::BULLET].addRigidBody(bulletPosition, 0.07, 2.0, false, bulletVelocity);
+	m_pRigidBodySimulator->addEntity(m_entities[EntityType::BULLET].getRigidBody(idx));
 
 }
 
@@ -74,9 +77,8 @@ void SphereSystemSimulator::setScene()
 {
 	reset();
 	addTarget(12, 12);
-	addBullet();
 	for (auto& entity : m_entities) {
-		m_pRigidBodySimulator->addEntities(entity.second.getRigidBody());
+		m_pRigidBodySimulator->addEntities(entity.second.getRigidBodies());
 	}
 }
 
@@ -149,8 +151,17 @@ void SphereSystemSimulator::simulateTimestep(float timeStep)
 
 void SphereSystemSimulator::onClick(int x, int y)
 {
+	addBullet();
 }
 
 void SphereSystemSimulator::onMouse(int x, int y)
 {
+	//std::cout << x << "\t" << y << std::endl;
+
+	CModelViewerCamera& cam = DUC->g_camera;
+	XMMATRIX rotation = XMMatrixRotationRollPitchYaw(0.0f, 5.0f, 0.0f);
+	cam.SetWorldMatrix(cam.GetWorldMatrix() * rotation);
+}
+
+void SphereSystemSimulator::rotateCameraBy(Vec3 rotation) {
 }

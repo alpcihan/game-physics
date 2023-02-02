@@ -129,61 +129,122 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 }
 
 
+//SphericalCollisionInfo RigidBodySystemSimulator::checkSphericalCollision(rigidBody& rb1, rigidBody& rb2) {
+//
+//	SphericalCollisionInfo info;
+//
+//	info.isValid = false;
+//	info.rb1VelocityChange = 0;
+//	info.rb2VelocityChange = 0;
+//
+//	if (rb1.isStatic && rb2.isStatic)
+//		return info;
+//
+//
+//	Vec3 centerDiff = rb2.center - rb1.center;
+//	float euclideanDistance = sqrt(centerDiff.squaredDistanceTo(Vec3(0.0)));
+//
+//
+//	if (euclideanDistance >= (rb1.radius + rb2.radius))
+//		return info;
+//		
+//
+//	Vec3 direction = centerDiff / euclideanDistance;
+//
+//
+//	Vec3 velocityDiff = rb2.lineerVelocity - rb1.lineerVelocity;
+//	float relativeVel = dot(velocityDiff, direction);
+//
+//	if (relativeVel >= 0)
+//		return info;
+//
+//	float s1 = (2 * rb2.mass * relativeVel) / (rb1.mass + rb2.mass);
+//	float s2 = (relativeVel * (rb2.mass - rb1.mass)) / (rb1.mass + rb2.mass);
+//
+//	info.isValid = true;
+//
+//	info.rb1VelocityChange = (direction * s1)/2;
+//	info.rb2VelocityChange = (direction * (s2 - relativeVel))/2;
+//	
+//	return info;
+//}
+
 SphericalCollisionInfo RigidBodySystemSimulator::checkSphericalCollision(rigidBody& rb1, rigidBody& rb2) {
 
-	SphericalCollisionInfo info;
+	//SphericalCollisionInfo info;
 
-	info.isValid = false;
-	info.rb1VelocityChange = 0;
-	info.rb2VelocityChange = 0;
+	//info.isValid = false;
+	//info.rb1VelocityChange = 0;
+	//info.rb2VelocityChange = 0;
 
-	//if (rb1.isStatic && rb2.isStatic) //if both of the object static don't calculate collusion
+	//if (rb1.isStatic && rb2.isStatic)
 	//	return info;
 
+
+	//Vec3 centerDiff = rb2.center - rb1.center;
+	//float euclideanDistance = sqrt(centerDiff.squaredDistanceTo(Vec3(0.0)));
+
+
+	//if (euclideanDistance >= (rb1.radius + rb2.radius))
+	//	return info;
+
+
+	//Vec3 direction = centerDiff / euclideanDistance;
+
+
+	//Vec3 velocityDiff = rb2.lineerVelocity - rb1.lineerVelocity;
+	//float relativeVel = dot(velocityDiff, direction);
+
+	//if (relativeVel >= 0)
+	//	return info;
+
+	//float bounciness = 0.4f; // bounciness factor
+	//float j = -(1 + bounciness) * relativeVel / ((1 / rb1.mass) + (1 / rb2.mass));
+	//Vec3 impulse = j * direction;
+
+	//info.isValid = true;
+	//if (!rb1.isStatic) {
+	//	info.rb1VelocityChange = -impulse / rb1.mass;
+	//}
+	//if (!rb2.isStatic) {
+	//	info.rb2VelocityChange = impulse / rb2.mass;
+	//}
+
+	//return info;
+
+
+	SphericalCollisionInfo info;
+	//check if the two spheres are intersecting
+	//float distance = (rb1.center - rb2.center).magnitude();
 	Vec3 centerDiff = rb2.center - rb1.center;
-	float euclideanDistance = sqrt(centerDiff.squaredDistanceTo(Vec3(0.0)));
+	float distance = sqrt(centerDiff.squaredDistanceTo(Vec3(0.0)));
 
-	if (euclideanDistance >= (rb1.radius + rb2.radius))
-		return info;
-		
-	Vec3 direction = centerDiff / euclideanDistance;
+	float sumRadius = rb1.radius + rb2.radius;
+	if (distance < sumRadius) {
+		info.isValid = true;
+		if (rb1.isStatic && rb2.isStatic)
+			return info;
 
-	Vec3 velocityDiff = rb2.lineerVelocity - rb1.lineerVelocity;
-	float relativeVel = dot(velocityDiff, direction);
+		Vec3 relativeVelocity = rb2.lineerVelocity - rb1.lineerVelocity;
+		float velocityAlongNormal = dot(relativeVelocity, (rb1.center - rb2.center)) / distance;
+		if (velocityAlongNormal > 0) {
+			//spheres are moving away from each other, no collision
+			return info;
+		}
 
-	if (relativeVel >= 0)
-		return info;
+		float impulseScalar = 2.0f * rb1.onedivMass * rb2.onedivMass / (rb1.onedivMass + rb2.onedivMass) * velocityAlongNormal;
+		Vec3 impulse = (rb1.center - rb2.center) * impulseScalar;
 
-	float s1 = (2 * rb2.mass * relativeVel) / (rb1.mass + rb2.mass);
-	float s2 = (relativeVel * (rb2.mass - rb1.mass)) / (rb1.mass + rb2.mass);
+		if (!rb1.isStatic)
+			info.rb1VelocityChange = impulse * rb1.onedivMass;
+		if (!rb2.isStatic)
+			info.rb2VelocityChange = -impulse * rb2.onedivMass;
+	}
 
-	info.isValid = true;
-
-
-	//TODO: Decide which approach to use 
-
-
-	//First Approach: Conserve the energy by applying it on the static rigid body as potantial energy.
-	//if (!rb1.isStatic)
-		info.rb1VelocityChange = (direction * s1) / 2;
-	//if (!rb2.isStatic)
-		info.rb2VelocityChange = (direction * (s2 - relativeVel)) / 2;
-
-	//Second Approach: Apply all the total energy on the non-static rigid body
-	//if (!rb1.isStatic && !rb2.isStatic) {
-	//	info.rb1VelocityChange = (direction * s1) / 2;
-	//	info.rb2VelocityChange = (direction * (s2 - relativeVel)) / 2;
-	//}
-	//else if (rb1.isStatic) {
-	//	info.rb2VelocityChange = direction * (s2 - relativeVel);
-	//}
-	//else {
-	//	info.rb1VelocityChange = direction * s1;
-	//}
-
-	
 	return info;
+
 }
+
 
 
 void RigidBodySystemSimulator::applyForceOfCollusions(float timestep) {
@@ -357,6 +418,12 @@ void RigidBodySystemSimulator::addEntities(const vector<rigidBody>& Entity)
 {
 	m_rigidBodies.insert(m_rigidBodies.end(),Entity.begin(),Entity.end());
 }
+
+void RigidBodySystemSimulator::addEntity(const rigidBody& entity)
+{
+	m_rigidBodies.push_back(entity);
+}
+
 
 void RigidBodySystemSimulator::clearRigidBodies()
 {
