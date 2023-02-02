@@ -110,7 +110,7 @@ void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 
 	for (auto& entity: m_entities) {
 		//entity.second.draw(DUC);
-		vector<rigidBody>& temp_rigidBodies=entity.second.getRigidBody();
+		vector<rigidBody>& temp_rigidBodies=entity.second.getRigidBodies();
 
 		for (size_t i = 0; i < temp_rigidBodies.size(); ++i) {
 			Real t = m_targetGrid->get(i / grid_w, i % grid_w);

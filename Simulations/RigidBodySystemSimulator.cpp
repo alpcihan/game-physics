@@ -171,77 +171,77 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 
 SphericalCollisionInfo RigidBodySystemSimulator::checkSphericalCollision(rigidBody& rb1, rigidBody& rb2) {
 
-	//SphericalCollisionInfo info;
-
-	//info.isValid = false;
-	//info.rb1VelocityChange = 0;
-	//info.rb2VelocityChange = 0;
-
-	//if (rb1.isStatic && rb2.isStatic)
-	//	return info;
-
-
-	//Vec3 centerDiff = rb2.center - rb1.center;
-	//float euclideanDistance = sqrt(centerDiff.squaredDistanceTo(Vec3(0.0)));
-
-
-	//if (euclideanDistance >= (rb1.radius + rb2.radius))
-	//	return info;
-
-
-	//Vec3 direction = centerDiff / euclideanDistance;
-
-
-	//Vec3 velocityDiff = rb2.lineerVelocity - rb1.lineerVelocity;
-	//float relativeVel = dot(velocityDiff, direction);
-
-	//if (relativeVel >= 0)
-	//	return info;
-
-	//float bounciness = 0.4f; // bounciness factor
-	//float j = -(1 + bounciness) * relativeVel / ((1 / rb1.mass) + (1 / rb2.mass));
-	//Vec3 impulse = j * direction;
-
-	//info.isValid = true;
-	//if (!rb1.isStatic) {
-	//	info.rb1VelocityChange = -impulse / rb1.mass;
-	//}
-	//if (!rb2.isStatic) {
-	//	info.rb2VelocityChange = impulse / rb2.mass;
-	//}
-
-	//return info;
-
-
 	SphericalCollisionInfo info;
-	//check if the two spheres are intersecting
-	//float distance = (rb1.center - rb2.center).magnitude();
+
+	info.isValid = false;
+	info.rb1VelocityChange = 0;
+	info.rb2VelocityChange = 0;
+
+	if (rb1.isStatic && rb2.isStatic)
+		return info;
+
+
 	Vec3 centerDiff = rb2.center - rb1.center;
-	float distance = sqrt(centerDiff.squaredDistanceTo(Vec3(0.0)));
+	float euclideanDistance = sqrt(centerDiff.squaredDistanceTo(Vec3(0.0)));
 
-	float sumRadius = rb1.radius + rb2.radius;
-	if (distance < sumRadius) {
-		info.isValid = true;
-		if (rb1.isStatic && rb2.isStatic)
-			return info;
 
-		Vec3 relativeVelocity = rb2.lineerVelocity - rb1.lineerVelocity;
-		float velocityAlongNormal = dot(relativeVelocity, (rb1.center - rb2.center)) / distance;
-		if (velocityAlongNormal > 0) {
-			//spheres are moving away from each other, no collision
-			return info;
-		}
+	if (euclideanDistance >= (rb1.radius + rb2.radius))
+		return info;
 
-		float impulseScalar = 2.0f * rb1.onedivMass * rb2.onedivMass / (rb1.onedivMass + rb2.onedivMass) * velocityAlongNormal;
-		Vec3 impulse = (rb1.center - rb2.center) * impulseScalar;
 
-		if (!rb1.isStatic)
-			info.rb1VelocityChange = impulse * rb1.onedivMass;
-		if (!rb2.isStatic)
-			info.rb2VelocityChange = -impulse * rb2.onedivMass;
+	Vec3 direction = centerDiff / euclideanDistance;
+
+
+	Vec3 velocityDiff = rb2.lineerVelocity - rb1.lineerVelocity;
+	float relativeVel = dot(velocityDiff, direction);
+
+	if (relativeVel >= 0)
+		return info;
+
+	float bounciness = 0.4f; // bounciness factor
+	float j = -(1 + bounciness) * relativeVel / ((1 / rb1.mass) + (1 / rb2.mass));
+	Vec3 impulse = j * direction;
+
+	info.isValid = true;
+	if (!rb1.isStatic) {
+		info.rb1VelocityChange = -impulse / rb1.mass;
+	}
+	if (!rb2.isStatic) {
+		info.rb2VelocityChange = impulse / rb2.mass;
 	}
 
 	return info;
+
+
+	//SphericalCollisionInfo info;
+	////check if the two spheres are intersecting
+	////float distance = (rb1.center - rb2.center).magnitude();
+	//Vec3 centerDiff = rb2.center - rb1.center;
+	//float distance = sqrt(centerDiff.squaredDistanceTo(Vec3(0.0)));
+
+	//float sumRadius = rb1.radius + rb2.radius;
+	//if (distance < sumRadius) {
+	//	info.isValid = true;
+	//	if (rb1.isStatic && rb2.isStatic)
+	//		return info;
+
+	//	Vec3 relativeVelocity = rb2.lineerVelocity - rb1.lineerVelocity;
+	//	float velocityAlongNormal = dot(relativeVelocity, (rb1.center - rb2.center)) / distance;
+	//	if (velocityAlongNormal > 0) {
+	//		//spheres are moving away from each other, no collision
+	//		return info;
+	//	}
+
+	//	float impulseScalar = 2.0f * rb1.onedivMass * rb2.onedivMass / (rb1.onedivMass + rb2.onedivMass) * velocityAlongNormal;
+	//	Vec3 impulse = (rb1.center - rb2.center) * impulseScalar;
+
+	//	if (!rb1.isStatic)
+	//		info.rb1VelocityChange = impulse * rb1.onedivMass;
+	//	if (!rb2.isStatic)
+	//		info.rb2VelocityChange = -impulse * rb2.onedivMass;
+	//}
+
+	//return info;
 
 }
 
