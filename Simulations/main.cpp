@@ -57,6 +57,8 @@ bool firstTime = true;
 // Video recorder
 FFmpeg* g_pFFmpegVideoRecorder = nullptr;
 
+bool lMouseDownFlag = false;
+
 
 void initTweakBar(){
 	g_pDUC->g_pTweakBar = TwNewBar("TweakBar");
@@ -204,13 +206,19 @@ void CALLBACK OnMouse( bool bLeftButtonDown, bool bRightButtonDown, bool bMiddle
                        bool bSideButton1Down, bool bSideButton2Down, int nMouseWheelDelta,
                        int xPos, int yPos, void* pUserContext )
 {
-	if (bLeftButtonDown)
+
+	if (bLeftButtonDown && !lMouseDownFlag)
 	{
+		lMouseDownFlag = true;
 		g_pSimulator->onClick(xPos,yPos);
 	}
 	else
-	{
+	{	
 		g_pSimulator->onMouse(xPos, yPos);
+	}
+
+	if (!bLeftButtonDown && lMouseDownFlag) {
+		lMouseDownFlag = false;
 	}
 }
 

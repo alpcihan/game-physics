@@ -163,8 +163,11 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 //
 //	info.isValid = true;
 //
-//	info.rb1VelocityChange = (direction * s1)/2;
-//	info.rb2VelocityChange = (direction * (s2 - relativeVel))/2;
+//	if (!rb1.isStatic)
+//		info.rb1VelocityChange = (direction * s1)/2;
+//
+//	if (!rb2.isStatic)
+//		info.rb2VelocityChange = (direction * (s2 - relativeVel))/2;
 //	
 //	return info;
 //}
@@ -198,18 +201,29 @@ SphericalCollisionInfo RigidBodySystemSimulator::checkSphericalCollision(rigidBo
 	if (relativeVel >= 0)
 		return info;
 
-	float bounciness = 0.4f; // bounciness factor
-	float j = -(1 + bounciness) * relativeVel / ((1 / rb1.mass) + (1 / rb2.mass));
-	Vec3 impulse = j * direction;
+	float bounciness = 0.6f; // bounciness factor
 
 	info.isValid = true;
-	if (!rb1.isStatic) {
-		info.rb1VelocityChange = -impulse / rb1.mass;
-	}
-	if (!rb2.isStatic) {
+
+	if (rb1.isStatic && !rb2.isStatic) {
+		float j = -(1 + bounciness) * relativeVel / ((1 / rb2.mass));
+		Vec3 impulse = j * direction;
 		info.rb2VelocityChange = impulse / rb2.mass;
+		return info;
 	}
 
+	if (!rb1.isStatic && rb2.isStatic) {
+		float j = -(1 + bounciness) * relativeVel / ((1 / rb1.mass));
+		Vec3 impulse = j * direction;
+		info.rb1VelocityChange = impulse / rb1.mass;
+		return info;
+	}
+
+	
+	float j = -(1 + bounciness) * relativeVel / ((1 / rb1.mass) + (1 / rb2.mass));
+	Vec3 impulse = j * direction;
+	info.rb1VelocityChange = impulse / rb1.mass;
+	info.rb2VelocityChange = -impulse / rb2.mass;
 	return info;
 
 

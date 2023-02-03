@@ -158,9 +158,9 @@ void SphereSystemSimulator::onMouse(int x, int y)
 {
 	//std::cout << x << "\t" << y << std::endl;
 
-	CModelViewerCamera& cam = DUC->g_camera;
-	XMMATRIX rotation = XMMatrixRotationRollPitchYaw(0.0f, 5.0f, 0.0f);
-	cam.SetWorldMatrix(cam.GetWorldMatrix() * rotation);
+	//CModelViewerCamera& cam = DUC->g_camera;
+	//XMMATRIX rotation = XMMatrixRotationRollPitchYaw(0.0f, 5.0f, 0.0f);
+	//cam.SetWorldMatrix(cam.GetWorldMatrix() * rotation);
 }
 
 void SphereSystemSimulator::rotateCameraBy(Vec3 rotation) {
