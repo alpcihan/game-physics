@@ -271,6 +271,9 @@ void RigidBodySystemSimulator::applyForceOfCollusions(float timestep) {
 			if (info.isValid) {
 				m_rigidBodies[k].lineerVelocity += info.rb1VelocityChange;
 				m_rigidBodies[l].lineerVelocity += info.rb2VelocityChange;
+
+				m_rigidBodies[k].participatedCollusion = true;
+				m_rigidBodies[l].participatedCollusion = true;
 			}
 		}
 
@@ -288,6 +291,7 @@ void RigidBodySystemSimulator::simulateTimestep(float timestep)
 
 		m_rigidBodies[i].totalForce = 0;
 		m_rigidBodies[i].torq = 0;
+		m_rigidBodies[i].participatedCollusion = false;
 	}
 
 	applyForceOfCollusions(timestep);

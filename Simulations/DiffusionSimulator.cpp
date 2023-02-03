@@ -54,7 +54,8 @@ DiffusionSimulator::DiffusionSimulator(uint32_t grid_w, uint32_t grid_h)
 	m_vfRotate = Vec3();
 	// to be implemented
 	T = new Grid(grid_w,grid_h);
-	fillRandT(T);
+	fillT(T);
+	//fillRandT(T);
 }
 
 DiffusionSimulator::~DiffusionSimulator()

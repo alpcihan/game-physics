@@ -48,11 +48,11 @@ void SphereSystemSimulator::clearRigidBodies() {
 	}
 }
 
-void SphereSystemSimulator::addTarget(uint16_t n_x, uint16_t n_y)
+void SphereSystemSimulator::addTarget(uint32_t n_x, uint32_t n_y)
 {
 	float scale = 0.1f;
-	for (uint16_t i = 0; i < n_x; ++i) {
-		for (uint16_t j = 0; j < n_y; ++j) {
+	for (size_t i = 0; i < n_x; ++i) {
+		for (size_t j = 0; j < n_y; ++j) {
 
 			float x = (i - n_x * 0.5) * scale, y = (j- n_y* 0.5) * scale;
 			m_entities[EntityType::TARGET].addRigidBody(Vec3(x, y, 0.0), 0.1, 2, true);
@@ -111,11 +111,15 @@ void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 	for (auto& entity: m_entities) {
 		//entity.second.draw(DUC);
 		vector<rigidBody>& temp_rigidBodies=entity.second.getRigidBodies();
-
+		Vec3 color(1.0f);
 		for (size_t i = 0; i < temp_rigidBodies.size(); ++i) {
-			Real t = m_targetGrid->get(i / grid_w, i % grid_w);
-			Vec3 color = (t, 0, -t);
 
+			if (entity.first == EntityType::TARGET) {
+
+				Real t = m_targetGrid->get(i / grid_w, i % grid_w);
+				color = (t, 0, -t);
+
+			}
 			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, color);
 			DUC->drawSphere(temp_rigidBodies[i].center, Vec3(temp_rigidBodies[i].radius));
 		}
@@ -141,12 +145,26 @@ void SphereSystemSimulator::externalForcesCalculations(float timeElapsed)
 {
 }
 
+void SphereSystemSimulator::updateTargetHeat() {
+
+	auto &target_RBs = m_entities[EntityType::TARGET].getRigidBodies();
+
+	for (size_t i = 0; i < target_RBs.size(); ++i) {
+
+		if (target_RBs[i].participatedCollusion) {
+			Real current_Temp = m_targetGrid->get(i / grid_w, i % grid_w);
+			m_targetGrid->set(i / grid_w, i % grid_w, current_Temp + 0.1);//TODO: Set the heat implact value from the UI
+		}
+
+	}
+}
+
 void SphereSystemSimulator::simulateTimestep(float timeStep)
 {
 	m_targetGrid= m_pDiffusionSimulator->diffuseTemperatureExplicit(timeStep);
 	//check the heat values and set the point validity
 	m_pRigidBodySimulator->simulateTimestep(timeStep);
-
+	updateTargetHeat();
 }
 
 void SphereSystemSimulator::onClick(int x, int y)

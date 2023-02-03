@@ -22,7 +22,7 @@ public:
 	uint32_t w() const { return m_w; }
 	uint32_t h() const { return m_h; }
 
-	void set(uint32_t w, uint32_t h, Real value) { m_T[m_w * h + w].temp = value; }
+	void set(uint32_t w, uint32_t h, Real value) { m_T[m_w * h + w].temp = value; m_temps[m_w * h + w].temp = value; }
 	const std::vector<PointInfo> &get() const { return m_temps; }
 	Real get(uint32_t w, uint32_t h) const { return m_temps[m_w * h + w].temp; }
 	Real get(uint32_t i) const { return m_temps[i].temp; }

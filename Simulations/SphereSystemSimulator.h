@@ -105,11 +105,12 @@ public:
 	void reset();
 	void clearRigidBodies();
 
-	void addTarget(uint16_t n_x, uint16_t n_y);
+	void addTarget(uint32_t n_x, uint32_t n_y);
 	void addBullet();
 	void setScene();
 
 	void updateEntities(vector<rigidBody>& updatedEntities);
+	void updateTargetHeat();
 	void drawFrame(ID3D11DeviceContext* pd3dImmediateContext); //TODO: Draw bullet and target seperately 
 	void notifyCaseChanged(int testCase);
 	void externalForcesCalculations(float timeElapsed);
@@ -130,7 +131,7 @@ protected:
 	DiffusionSimulator* m_pDiffusionSimulator;
 
 	Grid* m_targetGrid;
-	uint16_t grid_w,grid_h;
+	uint32_t grid_w,grid_h;
 
 	Point2D m_oldmouse;
 	Point2D m_mouse;

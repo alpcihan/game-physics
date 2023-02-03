@@ -43,4 +43,6 @@ public:
 	Vec3 totalForce;//F
 	float onedivMass;
 	bool isStatic = false;
+	bool participatedCollusion=false;
+
 };
