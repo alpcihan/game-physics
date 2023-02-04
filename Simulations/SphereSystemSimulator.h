@@ -131,6 +131,8 @@ protected:
 	DiffusionSimulator* m_pDiffusionSimulator;
 
 	uint32_t grid_w, grid_h;
+	float m_heatImpact;
+	float m_bulletVelocityScaler;
 
 	Point2D m_oldmouse;
 	Point2D m_mouse;

@@ -16,6 +16,8 @@ SphereSystemSimulator::SphereSystemSimulator()
 	this->m_iTestCase = 0;	
 	grid_w = 12;
 	grid_h = 12;
+	m_bulletVelocityScaler = 1.0f;
+	m_heatImpact = 1.0f;
 	m_pDiffusionSimulator = new DiffusionSimulator(grid_w, grid_h);
 	m_pRigidBodySimulator = new RigidBodySystemSimulator();
 
@@ -30,6 +32,9 @@ const char* SphereSystemSimulator::getTestCasesStr()
 void SphereSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 {
 	this->DUC = DUC;
+	TwAddVarRW(DUC->g_pTweakBar, "Bullet Velocity", TW_TYPE_FLOAT, &m_bulletVelocityScaler, "min=1.0");
+	TwAddVarRW(DUC->g_pTweakBar, "Heat Impact", TW_TYPE_FLOAT, &m_heatImpact, "min=0.01");
+
 }
 
 void SphereSystemSimulator::reset()
@@ -62,13 +67,13 @@ void SphereSystemSimulator::addTarget(uint32_t n_x, uint32_t n_y)
 	}
 }
 
-void SphereSystemSimulator::addBullet()// TODO: Define the function with initial bullet speed(which can be set from UI) and position(from eye pointer) 
+void SphereSystemSimulator::addBullet()
 {
 	Vec3 cameraPos = Vec3(DUC->g_camera.GetEyePt()); //Vec3(0.0, -3.0, 0.0);//IF we call from addBullet from constructer the DUC is not initialised yet thats why gives error
 
 	Vec3 cameraFrontVec = -cameraPos / sqrt(cameraPos.squaredDistanceTo(Vec3(0.0)));
 	Vec3 bulletPosition = cameraPos + 0.7 * cameraFrontVec;
-	Vec3 bulletVelocity = 7 * cameraFrontVec;
+	Vec3 bulletVelocity = m_bulletVelocityScaler * cameraFrontVec;
 
 	size_t idx = m_entities[EntityType::BULLET].addRigidBody(bulletPosition, 0.07, 2.0, false, bulletVelocity);
 	m_pRigidBodySimulator->addEntity(m_entities[EntityType::BULLET].getRigidBody(idx));
@@ -157,7 +162,7 @@ void SphereSystemSimulator::updateTargetHeat() {
 
 		if (target_RBs[i].participatedCollusion) {
 			Real current_Temp = targetGrid.get(i);
-			setHeat(targetGrid, i, current_Temp + 1.0);//TODO: Set the heat implact value from the UI
+			setHeat(targetGrid, i, current_Temp + m_heatImpact);//TODO: Set the heat implact value from the UI
 		}
 
 	}
