@@ -165,7 +165,7 @@ void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 				color = (-t, 0, t);
 
 			}
-			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(0, 0, 0), 2000.0, color);
+			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(0, 0, 0), 1.0, color);
 			DUC->drawSphere(temp_rigidBodies[i].center, Vec3(temp_rigidBodies[i].radius));
 		}
 	
