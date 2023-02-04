@@ -16,8 +16,8 @@
 SphereSystemSimulator::SphereSystemSimulator()
 {
 	this->m_iTestCase = 0;	
-	grid_w = 12;
-	grid_h = 12;
+	grid_w = 13;
+	grid_h = 13;
 	m_bulletVelocityScaler = 1.0f;
 	m_heatImpact = 1.0f;
 	m_pDiffusionSimulator = new DiffusionSimulator(grid_w, grid_h);
@@ -42,10 +42,10 @@ void SphereSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 void SphereSystemSimulator::reset()
 {
 	clearRigidBodies();
-	//m_pRigidBodySimulator->reset();
+	m_pRigidBodySimulator->reset();
 	//m_pDiffusionSimulator->reset();
 
-	for (auto difSim : m_pDiffusionSimulators) {
+	for (auto& difSim : m_pDiffusionSimulators) {
 		difSim->reset();
 	}
 
