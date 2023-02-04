@@ -45,7 +45,6 @@ void SphereSystemSimulator::reset()
 
 	m_mouse.x = m_mouse.y = 0;
 	m_oldmouse.x = m_oldmouse.y = 0;
-	//TODO: write here 
 }
 
 void SphereSystemSimulator::clearRigidBodies() {
@@ -162,7 +161,7 @@ void SphereSystemSimulator::updateTargetHeat() {
 
 		if (target_RBs[i].participatedCollusion) {
 			Real current_Temp = targetGrid.get(i);
-			setHeat(targetGrid, i, current_Temp + m_heatImpact);//TODO: Set the heat implact value from the UI
+			setHeat(targetGrid, i, current_Temp + m_heatImpact);
 		}
 
 	}

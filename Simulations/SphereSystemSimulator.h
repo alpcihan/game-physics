@@ -79,7 +79,7 @@ public:
 		return m_rigidBodies.size();
 	}
 
-	void updateRigidBodies(vector<rigidBody>& rigidbodies) { //TODO: Can be applied by move instead of '='
+	void updateRigidBodies(vector<rigidBody>& rigidbodies) { 
 		m_rigidBodies = rigidbodies;//.insert(m_rigidBodies.begin(),rigidbodies.begin(), rigidbodies.end());
 	}
 	EntityType getEntityType() { return m_EntityType; } //if needed
@@ -111,7 +111,7 @@ public:
 
 	void updateEntities(vector<rigidBody>& updatedEntities);
 	void updateTargetHeat();
-	void drawFrame(ID3D11DeviceContext* pd3dImmediateContext); //TODO: Draw bullet and target seperately 
+	void drawFrame(ID3D11DeviceContext* pd3dImmediateContext);
 	void notifyCaseChanged(int testCase);
 	void externalForcesCalculations(float timeElapsed);
 	void simulateTimestep(float timeStep);
