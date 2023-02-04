@@ -18,8 +18,8 @@ SphereSystemSimulator::SphereSystemSimulator()
 	this->m_iTestCase = 0;	
 	grid_w = 13;
 	grid_h = 13;
-	m_bulletVelocityScaler = 1.0f;
-	m_heatImpact = 1.0f;
+	m_bulletVelocityScaler = 100.0f;
+	m_heatImpact = 0.5f;
 	m_pDiffusionSimulator = new DiffusionSimulator(grid_w, grid_h);
 	m_pRigidBodySimulator = new RigidBodySystemSimulator();
 
@@ -43,7 +43,7 @@ void SphereSystemSimulator::reset()
 {
 	clearRigidBodies();
 	m_pRigidBodySimulator->reset();
-	//m_pDiffusionSimulator->reset();
+	m_pDiffusionSimulator->reset();
 
 	for (auto& difSim : m_pDiffusionSimulators) {
 		difSim->reset();
@@ -165,7 +165,7 @@ void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 				color = (-t, 0, t);
 
 			}
-			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, color);
+			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(0, 0, 0), 2000.0, color);
 			DUC->drawSphere(temp_rigidBodies[i].center, Vec3(temp_rigidBodies[i].radius));
 		}
 	
