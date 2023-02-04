@@ -38,7 +38,7 @@ public:
 	Vec3 lineerVelocity;
 	Vec3 angularVelocity;
 	Vec3 angularMomentum;
-	Mat4 inverseInertiaTensor;//current inertia tensor
+	Mat4 inverseInertiaTensor;	//current inertia tensor
 	Vec3 torq;//q
 	Vec3 totalForce;//F
 	float onedivMass;

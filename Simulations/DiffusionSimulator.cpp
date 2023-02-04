@@ -202,6 +202,9 @@ void fillT(Grid* grid) {
 
 void setHeat(Grid& T, size_t idx, Real heat)
 {
+	if (idx / T.w() == 0 || idx / T.w() == T.h() - 1 || idx % T.w() == 0 || (idx + 1) % T.w() == 0)
+		return;
+
 	T.set(idx, heat);
 }
 

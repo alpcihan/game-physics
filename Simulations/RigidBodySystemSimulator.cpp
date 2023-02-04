@@ -187,6 +187,8 @@ SphericalCollisionInfo RigidBodySystemSimulator::checkSphericalCollision(rigidBo
 	Vec3 centerDiff = rb2.center - rb1.center;
 	float euclideanDistance = sqrt(centerDiff.squaredDistanceTo(Vec3(0.0)));
 
+	
+
 
 	if (euclideanDistance >= (rb1.radius + rb2.radius))
 		return info;
@@ -201,9 +203,11 @@ SphericalCollisionInfo RigidBodySystemSimulator::checkSphericalCollision(rigidBo
 	if (relativeVel >= 0)
 		return info;
 
-	float bounciness = 0.6f; // bounciness factor
+	float bounciness = 1.0f;
 
 	info.isValid = true;
+
+	Vec3 normal = centerDiff * (1 / euclideanDistance);
 
 	if (rb1.isStatic && !rb2.isStatic) {
 		float j = -(1 + bounciness) * relativeVel / ((1 / rb2.mass));
@@ -220,43 +224,19 @@ SphericalCollisionInfo RigidBodySystemSimulator::checkSphericalCollision(rigidBo
 	}
 
 	
-	float j = -(1 + bounciness) * relativeVel / ((1 / rb1.mass) + (1 / rb2.mass));
+	/*float j = -(1 + bounciness) * relativeVel / ((1 / rb1.mass) + (1 / rb2.mass));
 	Vec3 impulse = j * direction;
 	info.rb1VelocityChange = impulse / rb1.mass;
 	info.rb2VelocityChange = -impulse / rb2.mass;
+	return info;*/
+
+	Vec3 momentumRb1 = rb1.mass * rb1.lineerVelocity;
+	Vec3 momentumRb2 = rb2.mass * rb2.lineerVelocity;
+
+	info.rb1VelocityChange = -rb1.lineerVelocity + momentumRb2 / rb1.mass;
+	info.rb2VelocityChange = -rb2.lineerVelocity + momentumRb1 / rb2.mass;
+
 	return info;
-
-
-	//SphericalCollisionInfo info;
-	////check if the two spheres are intersecting
-	////float distance = (rb1.center - rb2.center).magnitude();
-	//Vec3 centerDiff = rb2.center - rb1.center;
-	//float distance = sqrt(centerDiff.squaredDistanceTo(Vec3(0.0)));
-
-	//float sumRadius = rb1.radius + rb2.radius;
-	//if (distance < sumRadius) {
-	//	info.isValid = true;
-	//	if (rb1.isStatic && rb2.isStatic)
-	//		return info;
-
-	//	Vec3 relativeVelocity = rb2.lineerVelocity - rb1.lineerVelocity;
-	//	float velocityAlongNormal = dot(relativeVelocity, (rb1.center - rb2.center)) / distance;
-	//	if (velocityAlongNormal > 0) {
-	//		//spheres are moving away from each other, no collision
-	//		return info;
-	//	}
-
-	//	float impulseScalar = 2.0f * rb1.onedivMass * rb2.onedivMass / (rb1.onedivMass + rb2.onedivMass) * velocityAlongNormal;
-	//	Vec3 impulse = (rb1.center - rb2.center) * impulseScalar;
-
-	//	if (!rb1.isStatic)
-	//		info.rb1VelocityChange = impulse * rb1.onedivMass;
-	//	if (!rb2.isStatic)
-	//		info.rb2VelocityChange = -impulse * rb2.onedivMass;
-	//}
-
-	//return info;
-
 }
 
 
@@ -286,8 +266,8 @@ void RigidBodySystemSimulator::simulateTimestep(float timestep)
 	for (int i = 0; i < m_rigidBodies.size(); ++i) {
 		implementEuler(i, timestep);
 		//applyGravityToAll();
-		updateOrientation(i, timestep);
-		updateAngularVelocity(i, timestep);
+		//updateOrientation(i, timestep);
+		//updateAngularVelocity(i, timestep);
 
 		m_rigidBodies[i].totalForce = 0;
 		m_rigidBodies[i].torq = 0;
@@ -389,16 +369,16 @@ size_t RigidBodySystemSimulator::addRigidBody(Vec3 position, float radius, int m
 	newRb.angularVelocity = Vec3(0.0);
 	newRb.lineerVelocity = Vec3(0.0);
 	newRb.totalForce = 0;
-	newRb.onedivMass = 1.0 / mass;
+	//newRb.onedivMass = 1.0 / mass;
 
 	// Change interial vals later
-	Vec3 sphericalInertiaVals(0.0);
-	sphericalInertiaVals.x = (1.0 / 12.0) * mass * (2 * radius * radius);
-	sphericalInertiaVals.y = (1.0 / 12.0) * mass * (2 * radius * radius);
-	sphericalInertiaVals.z = (1.0 / 12.0) * mass * (2 * radius * radius);
+	//Vec3 sphericalInertiaVals(0.0);
+	//sphericalInertiaVals.x = (1.0 / 12.0) * mass * (2 * radius * radius);
+	//sphericalInertiaVals.y = (1.0 / 12.0) * mass * (2 * radius * radius);
+	//sphericalInertiaVals.z = (1.0 / 12.0) * mass * (2 * radius * radius);
 
-	newRb.inverseInertiaTensor.initScaling(sphericalInertiaVals.x, sphericalInertiaVals.y, sphericalInertiaVals.z); //set inertia tensor values //!!!!!!!!!!!possible error!!!!!!!!!!!!!!!!!!
-	newRb.inverseInertiaTensor = newRb.inverseInertiaTensor.inverse();
+	//newRb.inverseInertiaTensor.initScaling(sphericalInertiaVals.x, sphericalInertiaVals.y, sphericalInertiaVals.z); //set inertia tensor values //!!!!!!!!!!!possible error!!!!!!!!!!!!!!!!!!
+	//newRb.inverseInertiaTensor = newRb.inverseInertiaTensor.inverse();
 
 	//rigidBodies.push_back(newRb); //the rigid bodies are addded in the spheresystemsimulator
 	return m_rigidBodies.size() - 1;

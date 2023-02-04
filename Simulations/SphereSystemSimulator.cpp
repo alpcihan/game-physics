@@ -1,6 +1,8 @@
 ﻿#include "SphereSystemSimulator.h"
 #include "DiffusionSimulator.h"
 
+#define PI 3.141593
+
 //std::function<float(float)> SphereSystemSimulator::m_Kernels[5] = {
 //	[](float x) {return 1.0f; },              // Constant, m_iKernel = 0
 //	[](float x) {return 1.0f - x; },          // Linear, m_iKernel = 1, as given in the exercise Sheet, x = d/2r
@@ -35,8 +37,12 @@ void SphereSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 void SphereSystemSimulator::reset()
 {
 	clearRigidBodies();
-	m_pRigidBodySimulator->reset();
-	m_pDiffusionSimulator->reset();
+	//m_pRigidBodySimulator->reset();
+	//m_pDiffusionSimulator->reset();
+
+	for (auto difSim : m_pDiffusionSimulators) {
+		difSim->reset();
+	}
 
 	m_mouse.x = m_mouse.y = 0;
 	m_oldmouse.x = m_oldmouse.y = 0;
@@ -50,16 +56,41 @@ void SphereSystemSimulator::clearRigidBodies() {
 	}
 }
 
-void SphereSystemSimulator::addTarget(uint32_t n_x, uint32_t n_y)
+//void SphereSystemSimulator::addTarget(uint32_t n_x, uint32_t n_y, Vec3 centerPos = Vec3(0.0))
+//{
+//
+//	float scale = 0.1f;
+//	for (size_t i = 0; i < n_x; ++i) {
+//		for (size_t j = 0; j < n_y; ++j) {
+//
+//			float x = (i - n_x * 0.5) * scale, y = (j- n_y* 0.5) * scale;
+//			m_entities[EntityType::TARGET].addRigidBody(Vec3(x, y, 0.0), 0.1, 2, true);
+//		}
+//	}
+//}
+
+void SphereSystemSimulator::addTarget(uint32_t n_x, uint32_t n_y, Vec3 centerPos = Vec3(0.0f), Vec3 rotation = Vec3(0.0f, 0.0f, 0.0f), EntityType target = EntityType::TARGET0)
 {
-	float scale = 0.1f;
+	float radius = 0.1;
+	rotation *= (PI/180);
+	XMMATRIX rotationMat = XMMatrixRotationRollPitchYawFromVector(rotation.toDirectXVector());
+
+	m_pDiffusionSimulators.push_back(new DiffusionSimulator(grid_w, grid_h));
+
+
+	Vec3 topLeftPos = centerPos + Vec3(-int(n_x-1) / 2.0f, -int(n_y-1) / 2.0f, 0.0f) * radius;
 	for (size_t i = 0; i < n_x; ++i) {
 		for (size_t j = 0; j < n_y; ++j) {
 
-			float x = (i - n_x * 0.5) * scale, y = (j- n_y* 0.5) * scale;
-			m_entities[EntityType::TARGET].addRigidBody(Vec3(x, y, 0.0), 0.1, 2, true);
+			Vec3 pos = topLeftPos + Vec3(radius * i, radius * j, 0);
+			//pos = rotationMat * pos.toDirectXVector();
+			pos = Vec3(XMVector3Transform((pos-centerPos).toDirectXVector(), rotationMat)) + centerPos;
+			
+
+			m_entities[target].addRigidBody(pos, radius, 2, true);
 		}
 	}
+
 }
 
 void SphereSystemSimulator::addBullet()// TODO: Define the function with initial bullet speed(which can be set from UI) and position(from eye pointer) 
@@ -78,7 +109,14 @@ void SphereSystemSimulator::addBullet()// TODO: Define the function with initial
 void SphereSystemSimulator::setScene()
 {
 	reset();
-	addTarget(12, 12);
+	addTarget(grid_w, grid_h, Vec3(-0.7, 0, 0), Vec3(0, 90, 0), EntityType::TARGET0);
+	addTarget(grid_w, grid_h, Vec3(0.7, 0, 0), Vec3(0, 90, 0), EntityType::TARGET1);
+	addTarget(grid_w, grid_h, Vec3(0, 0, 0.7), Vec3(0, 0, 90), EntityType::TARGET2);
+	addTarget(grid_w, grid_h, Vec3(0, 0, -0.7), Vec3(0, 0, 90), EntityType::TARGET3);
+	addTarget(grid_w, grid_h, Vec3(0, 0.7, 0), Vec3(90, 0, 0), EntityType::TARGET4);
+	addTarget(grid_w, grid_h, Vec3(0, -0.7, 0), Vec3(90, 0, 0), EntityType::TARGET5);
+
+
 	for (auto& entity : m_entities) {
 		m_pRigidBodySimulator->addEntities(entity.second.getRigidBodies());
 	}
@@ -117,9 +155,9 @@ void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 		
 		for (size_t i = 0; i < temp_rigidBodies.size(); ++i) {
 
-			if (entity.first == EntityType::TARGET) {
+			if (entity.first > EntityType::BULLET) {
 
-				Real t = m_pDiffusionSimulator->getGrid().get(i);
+				Real t = m_pDiffusionSimulators[entity.first-2]->getGrid().get(i);
 				color = (-t, 0, t);
 
 			}
@@ -148,27 +186,32 @@ void SphereSystemSimulator::externalForcesCalculations(float timeElapsed)
 {
 }
 
-void SphereSystemSimulator::updateTargetHeat() {
+void SphereSystemSimulator::updateTargetHeat(uint32_t i) {
 
-	auto &target_RBs = m_entities[EntityType::TARGET].getRigidBodies();
-	Grid& targetGrid= m_pDiffusionSimulator->getGrid();
+	for (size_t j = EntityType::TARGET0; j < m_pDiffusionSimulators.size()+2; ++j) {
+		auto& target_RBs = m_entities[EntityType(j)].getRigidBodies();
+		Grid& targetGrid = m_pDiffusionSimulators[j-2]->getGrid();
 
-	for (size_t i = 0; i < target_RBs.size(); ++i) {
+		for (size_t i = 0; i < target_RBs.size(); ++i) {
 
-		if (target_RBs[i].participatedCollusion) {
-			Real current_Temp = targetGrid.get(i);
-			setHeat(targetGrid, i, current_Temp + 1.0);//TODO: Set the heat implact value from the UI
+			if (target_RBs[i].participatedCollusion) {
+				Real current_Temp = targetGrid.get(i);
+				setHeat(targetGrid, i, current_Temp + 1.0);//TODO: Set the heat implact value from the UI
+			}
+
 		}
-
 	}
 }
 
 void SphereSystemSimulator::simulateTimestep(float timeStep)
 {
-	m_pDiffusionSimulator->simulateTimestep(timeStep);
+	//m_pDiffusionSimulator->simulateTimestep(timeStep);
+	for (auto difSim : m_pDiffusionSimulators) {
+		difSim->simulateTimestep(timeStep);
+	}
 	//check the heat values and set the point validity
 	m_pRigidBodySimulator->simulateTimestep(timeStep);
-	updateTargetHeat();
+	updateTargetHeat(0);
 }
 
 void SphereSystemSimulator::onClick(int x, int y)

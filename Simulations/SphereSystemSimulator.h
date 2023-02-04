@@ -12,7 +12,12 @@
 enum EntityType {
 	DEFAULT,
 	BULLET,
-	TARGET
+	TARGET0,
+	TARGET1,
+	TARGET2,
+	TARGET3,
+	TARGET4,
+	TARGET5
 };
 
 class Entity{
@@ -49,20 +54,20 @@ public:
 		newRb.isStatic = isStatic;
 		newRb.lineerVelocity = initialVelocity;
 		newRb.totalForce = 0;
-		newRb.onedivMass = 1.0 / mass;
+		//newRb.onedivMass = 1.0 / mass;
 
 		// Change interial vals later
-		Vec3 sphericalInertiaVals(0.0);
-		sphericalInertiaVals.x = (1.0 / 12.0) * mass * (2 * radius * radius);
-		sphericalInertiaVals.y = (1.0 / 12.0) * mass * (2 * radius * radius);
-		sphericalInertiaVals.z = (1.0 / 12.0) * mass * (2 * radius * radius);
+		//Vec3 sphericalInertiaVals(0.0);
+		//sphericalInertiaVals.x = (1.0 / 12.0) * mass * (2 * radius * radius);
+		//sphericalInertiaVals.y = (1.0 / 12.0) * mass * (2 * radius * radius);
+		//sphericalInertiaVals.z = (1.0 / 12.0) * mass * (2 * radius * radius);
 
-		newRb.inverseInertiaTensor.initScaling(sphericalInertiaVals.x, sphericalInertiaVals.y, sphericalInertiaVals.z); //set inertia tensor values //!!!!!!!!!!!possible error!!!!!!!!!!!!!!!!!!
-		newRb.inverseInertiaTensor = newRb.inverseInertiaTensor.inverse();
+		//newRb.inverseInertiaTensor.initScaling(sphericalInertiaVals.x, sphericalInertiaVals.y, sphericalInertiaVals.z); //set inertia tensor values //!!!!!!!!!!!possible error!!!!!!!!!!!!!!!!!!
+		//newRb.inverseInertiaTensor = newRb.inverseInertiaTensor.inverse();
 
 		m_rigidBodies.push_back(newRb);
 
-		std::cout << m_rigidBodies.size() - 1 << std::endl;
+		//std::cout << m_rigidBodies.size() - 1 << std::endl;
 		return m_rigidBodies.size() - 1;
 
 	}
@@ -105,12 +110,12 @@ public:
 	void reset();
 	void clearRigidBodies();
 
-	void addTarget(uint32_t n_x, uint32_t n_y);
+	void addTarget(uint32_t n_x, uint32_t n_y, Vec3 centerPos, Vec3 rotation, EntityType entity);
 	void addBullet();
 	void setScene();
 
 	void updateEntities(vector<rigidBody>& updatedEntities);
-	void updateTargetHeat();
+	void updateTargetHeat(uint32_t i);
 	void drawFrame(ID3D11DeviceContext* pd3dImmediateContext); //TODO: Draw bullet and target seperately 
 	void notifyCaseChanged(int testCase);
 	void externalForcesCalculations(float timeElapsed);
@@ -129,6 +134,7 @@ protected:
 	
 	RigidBodySystemSimulator* m_pRigidBodySimulator;
 	DiffusionSimulator* m_pDiffusionSimulator;
+	vector<DiffusionSimulator*> m_pDiffusionSimulators;
 
 	uint32_t grid_w, grid_h;
 
