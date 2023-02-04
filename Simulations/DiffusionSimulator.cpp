@@ -54,8 +54,8 @@ DiffusionSimulator::DiffusionSimulator(uint32_t grid_w, uint32_t grid_h)
 	m_vfRotate = Vec3();
 	// to be implemented
 	T = new Grid(grid_w,grid_h);
-	fillT(T);
-	//fillRandT(T);
+	//fillT(T);
+	fillRandT(T);
 }
 
 DiffusionSimulator::~DiffusionSimulator()
@@ -74,7 +74,8 @@ void DiffusionSimulator::reset()
 	m_mouse.x = m_mouse.y = 0;
 	m_trackmouse.x = m_trackmouse.y = 0;
 	m_oldtrackmouse.x = m_oldtrackmouse.y = 0;
-	fillT(T);
+	//fillT(T);
+	fillRandT(T);
 }
 
 void DiffusionSimulator::initUI(DrawingUtilitiesClass *DUC)
@@ -197,6 +198,11 @@ void fillT(Grid* grid) {
 
 	grid->applyUpdates();
 
+}
+
+void setHeat(Grid& T, size_t idx, Real heat)
+{
+	T.set(idx, heat);
 }
 
 void fillRandT(Grid *grid)

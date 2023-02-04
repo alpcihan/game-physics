@@ -130,8 +130,7 @@ protected:
 	RigidBodySystemSimulator* m_pRigidBodySimulator;
 	DiffusionSimulator* m_pDiffusionSimulator;
 
-	Grid* m_targetGrid;
-	uint32_t grid_w,grid_h;
+	uint32_t grid_w, grid_h;
 
 	Point2D m_oldmouse;
 	Point2D m_mouse;

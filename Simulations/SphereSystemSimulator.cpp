@@ -1,4 +1,5 @@
 ﻿#include "SphereSystemSimulator.h"
+#include "DiffusionSimulator.h"
 
 //std::function<float(float)> SphereSystemSimulator::m_Kernels[5] = {
 //	[](float x) {return 1.0f; },              // Constant, m_iKernel = 0
@@ -13,9 +14,9 @@
 SphereSystemSimulator::SphereSystemSimulator()
 {
 	this->m_iTestCase = 0;	
-	grid_w = 32;
-	grid_h = 32;
-	m_pDiffusionSimulator = new DiffusionSimulator(grid_w,grid_h);
+	grid_w = 12;
+	grid_h = 12;
+	m_pDiffusionSimulator = new DiffusionSimulator(grid_w, grid_h);
 	m_pRigidBodySimulator = new RigidBodySystemSimulator();
 
 	m_pRigidBodySimulator->setUpdateCallback(std::bind(&SphereSystemSimulator::updateEntities, this, std::placeholders::_1));
@@ -35,6 +36,7 @@ void SphereSystemSimulator::reset()
 {
 	clearRigidBodies();
 	m_pRigidBodySimulator->reset();
+	m_pDiffusionSimulator->reset();
 
 	m_mouse.x = m_mouse.y = 0;
 	m_oldmouse.x = m_oldmouse.y = 0;
@@ -112,12 +114,13 @@ void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 		//entity.second.draw(DUC);
 		vector<rigidBody>& temp_rigidBodies=entity.second.getRigidBodies();
 		Vec3 color(1.0f);
+		
 		for (size_t i = 0; i < temp_rigidBodies.size(); ++i) {
 
 			if (entity.first == EntityType::TARGET) {
 
-				Real t = m_targetGrid->get(i / grid_w, i % grid_w);
-				color = (t, 0, -t);
+				Real t = m_pDiffusionSimulator->getGrid().get(i);
+				color = (-t, 0, t);
 
 			}
 			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, color);
@@ -148,12 +151,13 @@ void SphereSystemSimulator::externalForcesCalculations(float timeElapsed)
 void SphereSystemSimulator::updateTargetHeat() {
 
 	auto &target_RBs = m_entities[EntityType::TARGET].getRigidBodies();
+	Grid& targetGrid= m_pDiffusionSimulator->getGrid();
 
 	for (size_t i = 0; i < target_RBs.size(); ++i) {
 
 		if (target_RBs[i].participatedCollusion) {
-			Real current_Temp = m_targetGrid->get(i / grid_w, i % grid_w);
-			m_targetGrid->set(i / grid_w, i % grid_w, current_Temp + 0.1);//TODO: Set the heat implact value from the UI
+			Real current_Temp = targetGrid.get(i);
+			setHeat(targetGrid, i, current_Temp + 1.0);//TODO: Set the heat implact value from the UI
 		}
 
 	}
@@ -161,7 +165,7 @@ void SphereSystemSimulator::updateTargetHeat() {
 
 void SphereSystemSimulator::simulateTimestep(float timeStep)
 {
-	m_targetGrid= m_pDiffusionSimulator->diffuseTemperatureExplicit(timeStep);
+	m_pDiffusionSimulator->simulateTimestep(timeStep);
 	//check the heat values and set the point validity
 	m_pRigidBodySimulator->simulateTimestep(timeStep);
 	updateTargetHeat();

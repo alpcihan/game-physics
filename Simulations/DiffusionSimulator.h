@@ -22,7 +22,9 @@ public:
 	uint32_t w() const { return m_w; }
 	uint32_t h() const { return m_h; }
 
-	void set(uint32_t w, uint32_t h, Real value) { m_T[m_w * h + w].temp = value; m_temps[m_w * h + w].temp = value; }
+	void set(uint32_t w, uint32_t h, Real value) { this->m_T[m_w * h + w].temp = value; this->m_temps[m_w * h + w].temp = value; }
+	void set(size_t idx, Real value) { this->m_T[idx].temp = value; this->m_temps[idx].temp = value;}
+
 	const std::vector<PointInfo> &get() const { return m_temps; }
 	Real get(uint32_t w, uint32_t h) const { return m_temps[m_w * h + w].temp; }
 	Real get(uint32_t i) const { return m_temps[i].temp; }
@@ -59,7 +61,7 @@ public:
 	void drawObjects();
 	Grid *diffuseTemperatureExplicit(Real dTime);
 	void diffuseTemperatureImplicit(Real dTime);
-	Grid& getGrid() { return (*T); }
+	Grid& getGrid() const { return *T; }
 
 private:
 	// Attributes
@@ -77,6 +79,8 @@ private:
 };
 
 void fillT(Grid *T);
+void setHeat(Grid& T, size_t idx, Real heat);
 void fillRandT(Grid* grid);
+
 
 #endif
