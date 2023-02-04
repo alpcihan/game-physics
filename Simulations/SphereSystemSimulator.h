@@ -84,7 +84,7 @@ public:
 		return m_rigidBodies.size();
 	}
 
-	void updateRigidBodies(vector<rigidBody>& rigidbodies) { //TODO: Can be applied by move instead of '='
+	void updateRigidBodies(vector<rigidBody>& rigidbodies) { 
 		m_rigidBodies = rigidbodies;//.insert(m_rigidBodies.begin(),rigidbodies.begin(), rigidbodies.end());
 	}
 	EntityType getEntityType() { return m_EntityType; } //if needed
@@ -137,6 +137,8 @@ protected:
 	vector<DiffusionSimulator*> m_pDiffusionSimulators;
 
 	uint32_t grid_w, grid_h;
+	float m_heatImpact;
+	float m_bulletVelocityScaler;
 
 	Point2D m_oldmouse;
 	Point2D m_mouse;

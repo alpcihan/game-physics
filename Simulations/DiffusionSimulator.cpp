@@ -25,7 +25,6 @@ Grid& Grid::operator=(Grid* T)
 {
 	m_temps = T->get();
 	m_T = T->get();
-	// TODO: insert return statement here
 	return *this;
 }
 
