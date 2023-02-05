@@ -344,9 +344,6 @@ void DiffusionSimulator::onClick(int x, int y)
 {
 	m_trackmouse.x = x;
 	m_trackmouse.y = y;
-
-
-
 }
 
 void DiffusionSimulator::onMouse(int x, int y)

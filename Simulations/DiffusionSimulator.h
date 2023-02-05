@@ -29,7 +29,9 @@ public:
 	Real get(uint32_t w, uint32_t h) const { return m_temps[m_w * h + w].temp; }
 	Real get(uint32_t i) const { return m_temps[i].temp; }
 	bool getPointStatus(uint32_t w, uint32_t h) const { return m_temps[m_w * h + w].isActive; }
+	bool getPointStatus(uint32_t i) const { return getPointStatus(i % m_w, i / m_w);}
 	void setPointStatus(uint32_t w, uint32_t h, bool status) { m_temps[m_w * h + w].isActive = status; m_T[m_w * h + w].isActive = status;}
+	void setPointStatus(uint32_t i, bool status) {setPointStatus(i % m_w, i / m_w, status);}
 
 	void applyUpdates();
 

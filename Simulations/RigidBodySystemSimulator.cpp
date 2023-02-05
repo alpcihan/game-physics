@@ -1,7 +1,8 @@
 #include "RigidBodySystemSimulator.h"
 #include "collisionDetect.h"
 
-RigidBodySystemSimulator::RigidBodySystemSimulator()
+RigidBodySystemSimulator::RigidBodySystemSimulator(std::vector<bool>* destroyVecPtr, uint32_t w, uint32_t h)
+	:m_destroyVecPtr(destroyVecPtr), m_w(w), m_h(h)
 {
 	this->m_iTestCase = 0;
 }
@@ -70,26 +71,6 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testcase)
 		std::cout << "Demo0\n";
 		setProjectDemo();
 		break;
-	//case 1:
-	//	//Demo1
-	//	std::cout << "Demo1\n";
-	//	setDemo1();
-	//	break;
-	//case 2:
-	//	//Demo2
-	//	std::cout << "Demo2\n";
-	//	setDemo2();
-	//	break;
-	//case 3:
-	//	//Demo3
-	//	std::cout << "Demo3\n";
-	//	setDemo3();
-	//	break;
-	//case 4:
-	//	//Demo4
-	//	std::cout << "Demo4\n";
-	//	setDemo4();
-	//	break;
 	default:
 		break;
 	}
@@ -128,50 +109,6 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 	}
 }
 
-
-//SphericalCollisionInfo RigidBodySystemSimulator::checkSphericalCollision(rigidBody& rb1, rigidBody& rb2) {
-//
-//	SphericalCollisionInfo info;
-//
-//	info.isValid = false;
-//	info.rb1VelocityChange = 0;
-//	info.rb2VelocityChange = 0;
-//
-//	if (rb1.isStatic && rb2.isStatic)
-//		return info;
-//
-//
-//	Vec3 centerDiff = rb2.center - rb1.center;
-//	float euclideanDistance = sqrt(centerDiff.squaredDistanceTo(Vec3(0.0)));
-//
-//
-//	if (euclideanDistance >= (rb1.radius + rb2.radius))
-//		return info;
-//		
-//
-//	Vec3 direction = centerDiff / euclideanDistance;
-//
-//
-//	Vec3 velocityDiff = rb2.lineerVelocity - rb1.lineerVelocity;
-//	float relativeVel = dot(velocityDiff, direction);
-//
-//	if (relativeVel >= 0)
-//		return info;
-//
-//	float s1 = (2 * rb2.mass * relativeVel) / (rb1.mass + rb2.mass);
-//	float s2 = (relativeVel * (rb2.mass - rb1.mass)) / (rb1.mass + rb2.mass);
-//
-//	info.isValid = true;
-//
-//	if (!rb1.isStatic)
-//		info.rb1VelocityChange = (direction * s1)/2;
-//
-//	if (!rb2.isStatic)
-//		info.rb2VelocityChange = (direction * (s2 - relativeVel))/2;
-//	
-//	return info;
-//}
-
 SphericalCollisionInfo RigidBodySystemSimulator::checkSphericalCollision(rigidBody& rb1, rigidBody& rb2) {
 
 	SphericalCollisionInfo info;
@@ -183,19 +120,13 @@ SphericalCollisionInfo RigidBodySystemSimulator::checkSphericalCollision(rigidBo
 	if (rb1.isStatic && rb2.isStatic)
 		return info;
 
-
 	Vec3 centerDiff = rb2.center - rb1.center;
 	float euclideanDistance = sqrt(centerDiff.squaredDistanceTo(Vec3(0.0)));
-
-	
-
 
 	if (euclideanDistance >= (rb1.radius + rb2.radius))
 		return info;
 
-
 	Vec3 direction = centerDiff / euclideanDistance;
-
 
 	Vec3 velocityDiff = rb2.lineerVelocity - rb1.lineerVelocity;
 	float relativeVel = dot(velocityDiff, direction);
@@ -223,13 +154,6 @@ SphericalCollisionInfo RigidBodySystemSimulator::checkSphericalCollision(rigidBo
 		return info;
 	}
 
-	
-	/*float j = -(1 + bounciness) * relativeVel / ((1 / rb1.mass) + (1 / rb2.mass));
-	Vec3 impulse = j * direction;
-	info.rb1VelocityChange = impulse / rb1.mass;
-	info.rb2VelocityChange = -impulse / rb2.mass;
-	return info;*/
-
 	Vec3 momentumRb1 = rb1.mass * rb1.lineerVelocity;
 	Vec3 momentumRb2 = rb2.mass * rb2.lineerVelocity;
 
@@ -246,9 +170,17 @@ void RigidBodySystemSimulator::applyForceOfCollusions(float timestep) {
 
 	for (size_t k = 0; k < m_rigidBodies.size(); ++k) {		
 		for (size_t l = k+1; l < m_rigidBodies.size(); ++l) {	
+
+			// check for destroyed spheres
+			uint32_t dim = m_w * m_h;
+			uint32_t total = dim * 6;
+			if (k < total && (*m_destroyVecPtr)[(k+dim)%total]) continue;
+			if (l < total && (*m_destroyVecPtr)[(l+dim)%total]) continue;
+
 			SphericalCollisionInfo info = checkSphericalCollision(m_rigidBodies[k], m_rigidBodies[l]);
 
 			if (info.isValid) {
+				std::cout << k << std::endl;
 				m_rigidBodies[k].lineerVelocity += info.rb1VelocityChange;
 				m_rigidBodies[l].lineerVelocity += info.rb2VelocityChange;
 
@@ -256,7 +188,6 @@ void RigidBodySystemSimulator::applyForceOfCollusions(float timestep) {
 				m_rigidBodies[l].participatedCollusion = true;
 			}
 		}
-
 	}
 }
 
@@ -265,9 +196,6 @@ void RigidBodySystemSimulator::simulateTimestep(float timestep)
 
 	for (int i = 0; i < m_rigidBodies.size(); ++i) {
 		implementEuler(i, timestep);
-		//applyGravityToAll();
-		//updateOrientation(i, timestep);
-		//updateAngularVelocity(i, timestep);
 
 		m_rigidBodies[i].totalForce = 0;
 		m_rigidBodies[i].torq = 0;

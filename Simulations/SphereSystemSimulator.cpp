@@ -3,16 +3,6 @@
 
 #define PI 3.141593
 
-//std::function<float(float)> SphereSystemSimulator::m_Kernels[5] = {
-//	[](float x) {return 1.0f; },              // Constant, m_iKernel = 0
-//	[](float x) {return 1.0f - x; },          // Linear, m_iKernel = 1, as given in the exercise Sheet, x = d/2r
-//	[](float x) {return (1.0f - x)*(1.0f - x); }, // Quadratic, m_iKernel = 2
-//	[](float x) {return 1.0f / (x)-1.0f; },     // Weak Electric Charge, m_iKernel = 3
-//	[](float x) {return 1.0f / (x*x) - 1.0f; },   // Electric Charge, m_iKernel = 4
-//};
-
-// SphereSystemSimulator member functions
-
 SphereSystemSimulator::SphereSystemSimulator()
 {
 	this->m_iTestCase = 0;	
@@ -21,9 +11,11 @@ SphereSystemSimulator::SphereSystemSimulator()
 	m_bulletVelocityScaler = 100.0f;
 	m_heatImpact = 0.5f;
 	m_pDiffusionSimulator = new DiffusionSimulator(grid_w, grid_h);
-	m_pRigidBodySimulator = new RigidBodySystemSimulator();
+	m_pRigidBodySimulator = new RigidBodySystemSimulator(&m_destroyVec, grid_w, grid_h);
 
 	m_pRigidBodySimulator->setUpdateCallback(std::bind(&SphereSystemSimulator::updateEntities, this, std::placeholders::_1));
+
+	m_destroyVec = std::vector<bool>(grid_w * grid_h * 6, false);
 }
 
 const char* SphereSystemSimulator::getTestCasesStr()
@@ -58,20 +50,11 @@ void SphereSystemSimulator::clearRigidBodies() {
 	for (auto& entity: m_entities) {
 		entity.second.clear();
 	}
-}
 
-//void SphereSystemSimulator::addTarget(uint32_t n_x, uint32_t n_y, Vec3 centerPos = Vec3(0.0))
-//{
-//
-//	float scale = 0.1f;
-//	for (size_t i = 0; i < n_x; ++i) {
-//		for (size_t j = 0; j < n_y; ++j) {
-//
-//			float x = (i - n_x * 0.5) * scale, y = (j- n_y* 0.5) * scale;
-//			m_entities[EntityType::TARGET].addRigidBody(Vec3(x, y, 0.0), 0.1, 2, true);
-//		}
-//	}
-//}
+	for (auto& entity : m_entities) {
+		entity.second.clear();
+	}
+}
 
 void SphereSystemSimulator::addTarget(uint32_t n_x, uint32_t n_y, Vec3 centerPos = Vec3(0.0f), Vec3 rotation = Vec3(0.0f, 0.0f, 0.0f), EntityType target = EntityType::TARGET0)
 {
@@ -94,7 +77,6 @@ void SphereSystemSimulator::addTarget(uint32_t n_x, uint32_t n_y, Vec3 centerPos
 			m_entities[target].addRigidBody(pos, radius, 2, true);
 		}
 	}
-
 }
 
 void SphereSystemSimulator::addBullet()
@@ -107,7 +89,6 @@ void SphereSystemSimulator::addBullet()
 
 	size_t idx = m_entities[EntityType::BULLET].addRigidBody(bulletPosition, 0.07, 2.0, false, bulletVelocity);
 	m_pRigidBodySimulator->addEntity(m_entities[EntityType::BULLET].getRigidBody(idx));
-
 }
 
 void SphereSystemSimulator::setScene()
@@ -151,13 +132,14 @@ void SphereSystemSimulator::updateEntities(vector<rigidBody> &rigidBodyBuffer)
 
 void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
-
 	for (auto& entity: m_entities) {
-		//entity.second.draw(DUC);
+
 		vector<rigidBody>& temp_rigidBodies=entity.second.getRigidBodies();
 		Vec3 color(1.0f);
 		
 		for (size_t i = 0; i < temp_rigidBodies.size(); ++i) {
+			
+			if (isSphereDestroyed(i, entity.first)) continue;
 
 			if (entity.first > EntityType::BULLET) {
 
@@ -165,12 +147,31 @@ void SphereSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 				color = (-t, 0, t);
 
 			}
+
 			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(0, 0, 0), 1.0, color);
 			DUC->drawSphere(temp_rigidBodies[i].center, Vec3(temp_rigidBodies[i].radius));
 		}
-	
 	}
+}
 
+void SphereSystemSimulator::updateTargetHeat(uint32_t i) {
+	for (size_t j = EntityType::TARGET0; j < m_pDiffusionSimulators.size() + 2; ++j) {
+		auto& target_RBs = m_entities[EntityType(j)].getRigidBodies();
+		Grid& targetGrid = m_pDiffusionSimulators[j - 2]->getGrid();
+
+		for (size_t i = 0; i < target_RBs.size(); ++i) {
+			if (target_RBs[i].participatedCollusion) {
+				Real current_Temp = targetGrid.get(i);
+				setHeat(targetGrid, i, current_Temp + m_heatImpact);
+			}
+
+			if (targetGrid.get(i) > 1.0)
+			{
+				destroySphere(i, (EntityType)j);
+				targetGrid.setPointStatus(i, false);
+			}
+		}
+	}
 }
 
 void SphereSystemSimulator::notifyCaseChanged(int testCase)
@@ -186,26 +187,7 @@ void SphereSystemSimulator::notifyCaseChanged(int testCase)
 	}
 }
 
-void SphereSystemSimulator::externalForcesCalculations(float timeElapsed)
-{
-}
-
-void SphereSystemSimulator::updateTargetHeat(uint32_t i) {
-
-	for (size_t j = EntityType::TARGET0; j < m_pDiffusionSimulators.size()+2; ++j) {
-		auto& target_RBs = m_entities[EntityType(j)].getRigidBodies();
-		Grid& targetGrid = m_pDiffusionSimulators[j-2]->getGrid();
-
-		for (size_t i = 0; i < target_RBs.size(); ++i) {
-
-		if (target_RBs[i].participatedCollusion) {
-			Real current_Temp = targetGrid.get(i);
-			setHeat(targetGrid, i, current_Temp + m_heatImpact);
-		}
-
-		}
-	}
-}
+void SphereSystemSimulator::externalForcesCalculations(float timeElapsed) {}
 
 void SphereSystemSimulator::simulateTimestep(float timeStep)
 {
@@ -218,19 +200,27 @@ void SphereSystemSimulator::simulateTimestep(float timeStep)
 	updateTargetHeat(0);
 }
 
-void SphereSystemSimulator::onClick(int x, int y)
+void SphereSystemSimulator::onClick(int x, int y) { addBullet(); }
+
+void SphereSystemSimulator::onMouse(int x, int y){}
+
+void SphereSystemSimulator::rotateCameraBy(Vec3 rotation) {}
+
+void SphereSystemSimulator::destroySphere(uint32_t i, EntityType type)
 {
-	addBullet();
+	static const uint32_t count = m_destroyVec.size() / 6;
+
+	if (type < EntityType::TARGET0 || m_destroyVec[count * (type - 1) + i]) return;
+
+	m_destroyVec[count * (type - 1) + i] = true;
+	std::cout << "destroyed: " << count * (type - 1) + i << std::endl;
 }
 
-void SphereSystemSimulator::onMouse(int x, int y)
+bool SphereSystemSimulator::isSphereDestroyed(uint32_t i, EntityType type)
 {
-	//std::cout << x << "\t" << y << std::endl;
+	static const uint32_t count = m_destroyVec.size() / 6;
 
-	//CModelViewerCamera& cam = DUC->g_camera;
-	//XMMATRIX rotation = XMMatrixRotationRollPitchYaw(0.0f, 5.0f, 0.0f);
-	//cam.SetWorldMatrix(cam.GetWorldMatrix() * rotation);
-}
+	if (type < EntityType::TARGET0) false;
 
-void SphereSystemSimulator::rotateCameraBy(Vec3 rotation) {
+	return m_destroyVec[count * (type - 1) + i];
 }

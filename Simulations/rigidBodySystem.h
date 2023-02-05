@@ -28,8 +28,7 @@ struct SphericalCollisionInfo {
 
 struct rigidBody {
 public:
-	//	rigidBody()=default;
-	//	rigidBody(const rigidBody&) = delete;
+	rigidBody() = default;
 
 	Vec3 center;
 	float radius;
@@ -44,5 +43,4 @@ public:
 	float onedivMass;
 	bool isStatic = false;
 	bool participatedCollusion=false;
-
 };

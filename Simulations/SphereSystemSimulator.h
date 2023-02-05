@@ -29,14 +29,9 @@ public:
 
 	void clear() {
 		m_rigidBodies.clear();
-
-
-
-		//m_rigidBodies.shrink_to_fit();
 	}
 
 	void draw(DrawingUtilitiesClass* DUC) {
-
 		for (size_t i = 0; i < m_rigidBodies.size(); ++i) {
 			DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
 			DUC->drawSphere(m_rigidBodies[i].center, Vec3(m_rigidBodies[i].radius));
@@ -44,8 +39,6 @@ public:
 	}
 
 	size_t addRigidBody(Vec3 position, float radius, int mass, bool isStatic=false, Vec3 initialVelocity=Vec3(0.0)) {
-
-		//m_rigidBodies.push_back(rigidBody);
 		rigidBody newRb;
 		newRb.center = position;
 		newRb.radius = radius;
@@ -54,22 +47,9 @@ public:
 		newRb.isStatic = isStatic;
 		newRb.lineerVelocity = initialVelocity;
 		newRb.totalForce = 0;
-		//newRb.onedivMass = 1.0 / mass;
-
-		// Change interial vals later
-		//Vec3 sphericalInertiaVals(0.0);
-		//sphericalInertiaVals.x = (1.0 / 12.0) * mass * (2 * radius * radius);
-		//sphericalInertiaVals.y = (1.0 / 12.0) * mass * (2 * radius * radius);
-		//sphericalInertiaVals.z = (1.0 / 12.0) * mass * (2 * radius * radius);
-
-		//newRb.inverseInertiaTensor.initScaling(sphericalInertiaVals.x, sphericalInertiaVals.y, sphericalInertiaVals.z); //set inertia tensor values //!!!!!!!!!!!possible error!!!!!!!!!!!!!!!!!!
-		//newRb.inverseInertiaTensor = newRb.inverseInertiaTensor.inverse();
 
 		m_rigidBodies.push_back(newRb);
-
-		//std::cout << m_rigidBodies.size() - 1 << std::endl;
 		return m_rigidBodies.size() - 1;
-
 	}
 
 	vector<rigidBody>& getRigidBodies() {//make it get rigid bodies
@@ -131,6 +111,7 @@ protected:
 	//int m_iAccelerator; // switch between NAIVEACC and GRIDACC, (optionally, KDTREEACC, 2)
 
 	std::unordered_map<EntityType,Entity> m_entities;
+	std::vector<bool> m_destroyVec;
 	
 	RigidBodySystemSimulator* m_pRigidBodySimulator;
 	DiffusionSimulator* m_pDiffusionSimulator;
@@ -142,6 +123,11 @@ protected:
 
 	Point2D m_oldmouse;
 	Point2D m_mouse;
+
+private:
+	void destroySphere(uint32_t i, EntityType type);
+	bool isSphereDestroyed(uint32_t i, EntityType type);
+	uint32_t m_destroyedSphereCount = 0;
 };
 
 #endif
